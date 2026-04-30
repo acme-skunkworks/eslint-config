@@ -47,8 +47,10 @@
     "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "prepublishOnly": "pnpm run build",
+    "release": "pnpm run build && changeset publish",
     "sort-pkg-json": "npx sort-package-json",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "version": "changeset version"
   },
   "dependencies": {
     "astro-eslint-parser": "^1.0.0",
@@ -68,6 +70,7 @@
     "typescript-eslint": "^8.46.0"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@robeasthope/markdownlint-config": "^1.1.1",
     "@types/eslint": "^9.6.1",
     "@types/node": "^24.6.2",
