@@ -1,16 +1,16 @@
 /* eslint-disable canonical/filename-match-exported */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { astro } from "./rules/astro";
-import { commonjs } from "./rules/commonjs";
-import { frameworkRouting as frameworkRoutingRule } from "./rules/frameworkRouting";
-import { ignoredFileAndFolders } from "./rules/ignoredFileAndFolders";
-import { packageJson } from "./rules/packageJson";
-import { preferences } from "./rules/preferences";
-import { reactRouterExceptions } from "./rules/reactRouterExceptions";
-import { sanity } from "./rules/sanity";
-import { storybook } from "./rules/storybook";
-import { testFiles } from "./rules/testFiles";
-import { typescriptOverrides } from "./rules/typescriptOverrides";
+import { astro } from "./rules/astro.js";
+import { commonjs } from "./rules/commonjs.js";
+import { frameworkRouting as frameworkRoutingRule } from "./rules/frameworkRouting.js";
+import { ignoredFileAndFolders } from "./rules/ignoredFileAndFolders.js";
+import { packageJson } from "./rules/packageJson.js";
+import { preferences } from "./rules/preferences.js";
+import { reactRouterExceptions } from "./rules/reactRouterExceptions.js";
+import { sanity } from "./rules/sanity.js";
+import { storybook } from "./rules/storybook.js";
+import { testFiles } from "./rules/testFiles.js";
+import { typescriptOverrides } from "./rules/typescriptOverrides.js";
 import type { Linter } from "eslint";
 import eslintConfigCanonicalAuto from "eslint-config-canonical/auto";
 import pluginImportX from "eslint-plugin-import-x";
@@ -65,12 +65,12 @@ export const frameworkRouting: Linter.Config[] = [
  */
 export const testing: Linter.Config = testFiles;
 
-export { astro } from "./rules/astro";
-export { complexity } from "./rules/complexity";
-export { e2e } from "./rules/e2e";
-export { sanity } from "./rules/sanity";
-export { storybook } from "./rules/storybook";
-export { tableComponents } from "./rules/tableComponents";
+export { astro } from "./rules/astro.js";
+export { complexity } from "./rules/complexity.js";
+export { e2e } from "./rules/e2e.js";
+export { sanity } from "./rules/sanity.js";
+export { storybook } from "./rules/storybook.js";
+export { tableComponents } from "./rules/tableComponents.js";
 
 /**
  * Back-compat default export — preserves the v6.x composition exactly so
