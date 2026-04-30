@@ -1,124 +1,127 @@
 # @acme-skunkworks/eslint-config
 
-Shared ESLint v9 configuration with TypeScript and React support.
+Shared ESLint v9 configuration with TypeScript and React support, composed from named-export presets.
 
 ## 📦 Installation
 
-Install the config along with ESLint:
-
 ```bash
-pnpm add -D @acme-skunkworks/eslint-config eslint
+pnpm add -D @acme-skunkworks/eslint-config eslint prettier
 ```
 
-That's it! All ESLint plugins are bundled as dependencies, so you don't need to install them separately.
+Every ESLint plugin used by the config ships as a regular dependency — you don't install plugins separately. `eslint` and `prettier` are peer dependencies.
 
-### Migrating from `@robeasthope/eslint-config`
+## 🚀 Usage
 
-This package was previously published as `@robeasthope/eslint-config` from the [`RobEasthope/protomolecule`](https://github.com/RobEasthope/protomolecule) monorepo (versions up to and including v6.2.1). It now ships from this standalone repo under the `@acme-skunkworks` scope.
+The package exports presets as named exports. Compose them in your `eslint.config.js`:
 
-To migrate:
+```js
+import { base, typescript, frameworkRouting } from "@acme-skunkworks/eslint-config";
+
+export default [
+  ...base,
+  typescript,
+  ...frameworkRouting,
+  // your overrides last so they win
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
+];
+```
+
+Pull in the presets relevant to your project:
+
+| Export | What it covers |
+|---|---|
+| `base` | Plugin-alias hack + global ignores + the canonical baseline + packageJson lint config + commonjs file overrides + the big preferences block (top-level type imports, `func-style: declaration`, prettier integration, import resolver, `no-console` warn, etc.). The "you almost always want this" stack. |
+| `typescript` | Overrides for `**/*.{ts,tsx}` (disables `react/no-unused-prop-types` and `react/prop-types`). |
+| `frameworkRouting` | Disables `canonical/filename-match-exported` for routing dirs (`routes/**`, `app/**`, `pages/**`, `src/routes/**`, `src/pages/**`); re-allows arrow functions on `root.tsx` / `*.route.tsx`. Order matters — must spread **after** `base`. |
+| `astro` | `eslint-plugin-astro/flat/recommended` + Astro-specific overrides. Pull in for Astro projects. |
+| `sanity` | Schema property ordering for `*.schema.ts` and structure-file exceptions. Pull in for projects using Sanity Studio. |
+| `testing` | Relaxes strict TypeScript rules and devDependencies imports for `**/*.{test,spec}.*`, `__tests__/**`, and setup files. |
+| `storybook` | Overrides for `**/*.stories.{ts,tsx}`. |
+| `complexity` | Raises cyclomatic complexity threshold to 40 for `**/scripts/**` (orchestration scripts run linearly). Opt-in. |
+| `e2e` | Disables `react-hooks/rules-of-hooks` for `**/e2e/**` (Playwright `test.extend` callbacks are false positives). Opt-in. |
+| `tableComponents` | Disables `react/no-unstable-nested-components` for `**/*Table.tsx` (TanStack Table / Refine column-cell renderers). Opt-in. |
+
+> **Note:** Requires ESLint v9+ with flat config. Node 22+.
+
+## 🔄 Migrating from `@robeasthope/eslint-config`
+
+This package was previously published as `@robeasthope/eslint-config` from the [`RobEasthope/protomolecule`](https://github.com/RobEasthope/protomolecule) monorepo (versions up to and including v6.2.1). It now ships from this standalone repo under the `@acme-skunkworks` scope, with a named-export composition pattern.
+
+### Step 1: rename the dep
 
 ```bash
 pnpm remove @robeasthope/eslint-config
 pnpm add -D @acme-skunkworks/eslint-config
 ```
 
-Then update your `eslint.config.js` import:
+### Step 2: switch to named exports
 
-```javascript
-// Before
-import eslintConfig from "@robeasthope/eslint-config";
+The default export still works during the migration window, but is **deprecated** and will be removed in a future major:
 
-// After
+```js
+// Old (still works in v7, deprecated)
 import eslintConfig from "@acme-skunkworks/eslint-config";
+export default [...eslintConfig];
+
+// New (preferred — pull in only what you need)
+import { base, typescript, frameworkRouting } from "@acme-skunkworks/eslint-config";
+export default [...base, typescript, ...frameworkRouting];
 ```
 
-The exported flat-config array is unchanged. No rule changes ship with the rename — for older breaking-change history (v4 → v5 plugin bundling, v5 → v6 top-level type imports) see the original [protomolecule changelog](https://github.com/RobEasthope/protomolecule/blob/main/packages/eslint-config/CHANGELOG.md).
+If your project was a Sanity / Storybook / Astro consumer, opt-in to those presets explicitly. The default export bundled all of them; the new shape makes the dependencies explicit.
 
-## 🚀 Usage
+### What's new in v7
 
-In your `eslint.config.js`:
+- **Tempest fold-in.** Plugin versions bumped to current; `complexity`, `e2e`, and `tableComponents` are new opt-in presets ported from Tempest. See `MIGRATION_FROM_PROTOMOLECULE.md` for the per-preset diff.
+- **Named-export composition.** Each preset is independently importable; consumers compose what they need.
+- **`prettier` is now a `peerDependency`.** Was already a transitive dep via `eslint-plugin-prettier`; this just makes the contract explicit.
 
-```javascript
-import eslintConfig from "@acme-skunkworks/eslint-config";
-
-export default [
-  ...eslintConfig,
-  // your custom rules
-  {
-    rules: {
-      // override or add rules here
-    },
-  },
-];
-```
-
-> **Note:** This config requires ESLint v9+ with flat config.
+For older breaking-change history (v4 → v5 plugin bundling, v5 → v6 top-level type imports) see the original [protomolecule changelog](https://github.com/RobEasthope/protomolecule/blob/main/packages/eslint-config/CHANGELOG.md).
 
 ## ✨ Features
 
-This configuration includes:
+- **TypeScript** — full TypeScript linting via `typescript-eslint` v8.
+- **React** — React 19 compatible rules from canonical-auto.
+- **React Router 7 compatible** — top-level type imports, `func-style: declaration` with framework-aware exceptions for typed exports on `root.tsx` / `*.route.tsx`.
+- **Astro** — opt-in preset.
+- **Sanity** — opt-in preset for schema property ordering and structure-file exceptions.
+- **Modern JavaScript** — ES2022+, Prettier integration, accessibility checks.
 
-- **TypeScript Support**: Full TypeScript linting with type checking
-- **React Support**: React and JSX best practices
-- **React Router 7 Compatible**: Top-level type imports for virtual module compatibility
-- **Modern JavaScript**: ES2022+ features
-- **Code Quality**: Enforces consistent code style
-- **Accessibility**: Basic a11y checks for React components
+## 🛠️ Customisation
 
-## 📝 Rules Overview
+Override any rule from your local config — last config wins in flat config:
 
-### Included Plugins
+```js
+import { base, typescript } from "@acme-skunkworks/eslint-config";
 
-- TypeScript ESLint rules
-- React hooks rules
-- Import ordering and resolution
-- Best practices for modern JavaScript
-
-### Key Rules
-
-- Strict TypeScript checking
-- React 19 compatible rules
-- **Top-level type imports** (`import type { }` instead of `import { type }`)
-- Consistent import ordering
-- No unused variables or imports
-- Consistent naming conventions
-
-## 🛠️ Customization
-
-### Override Rules
-
-You can override any rules by adding them to your local config:
-
-```javascript
 export default [
-  ...eslintConfig,
+  ...base,
+  typescript,
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn", // downgrade from error
-      "react/prop-types": "off", // disable prop-types
+      "@typescript-eslint/no-explicit-any": "warn",
+      "react/prop-types": "off",
     },
   },
 ];
 ```
 
-### Custom Plugin Configuration
+Add additional plugins by configuring them directly:
 
-If you need to configure plugins directly, install them separately:
-
-```javascript
-import eslintConfig from "@acme-skunkworks/eslint-config";
+```js
+import { base, typescript } from "@acme-skunkworks/eslint-config";
 import pluginReact from "eslint-plugin-react";
 
 export default [
-  ...eslintConfig,
+  ...base,
+  typescript,
   {
-    plugins: {
-      react: pluginReact,
-    },
-    rules: {
-      "react/jsx-uses-react": "error",
-    },
+    plugins: { react: pluginReact },
+    rules: { "react/jsx-uses-react": "error" },
   },
 ];
 ```
@@ -126,14 +129,10 @@ export default [
 ## 🔧 Development
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Run linting on this package
-pnpm lint
-
-# Fix linting issues
-pnpm lint:fix
+pnpm install   # install deps
+pnpm run build # tsc → dist/
+pnpm lint      # lint this package's own source
+pnpm lint:fix  # auto-fix
 ```
 
 ## 📄 License
