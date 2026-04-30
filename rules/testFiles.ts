@@ -20,6 +20,10 @@ export const testFiles = {
     // and the test would fail anyway if the assumption is wrong
     "@typescript-eslint/no-non-null-assertion": "warn",
 
+    // Vitest setup files use `/// <reference types="..." />` to augment global
+    // types (e.g. `@testing-library/jest-dom`); the rule is a false positive there.
+    "@typescript-eslint/triple-slash-reference": "off",
+
     // Allow devDependencies in test files and setup files
     // Test dependencies should be in devDependencies, not dependencies
     "import/no-extraneous-dependencies": [
