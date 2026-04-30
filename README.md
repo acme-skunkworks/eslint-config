@@ -1,4 +1,4 @@
-# @robeasthope/eslint-config
+# @acme-skunkworks/eslint-config
 
 Shared ESLint v9 configuration with TypeScript and React support.
 
@@ -7,71 +7,40 @@ Shared ESLint v9 configuration with TypeScript and React support.
 Install the config along with ESLint:
 
 ```bash
-pnpm add -D @robeasthope/eslint-config eslint
+pnpm add -D @acme-skunkworks/eslint-config eslint
 ```
 
 That's it! All ESLint plugins are bundled as dependencies, so you don't need to install them separately.
 
-### Migrating from v5.x
+### Migrating from `@robeasthope/eslint-config`
 
-**v6.0.0 introduces a breaking change**: Type import style has changed from inline to top-level for React Router 7 compatibility.
+This package was previously published as `@robeasthope/eslint-config` from the [`RobEasthope/protomolecule`](https://github.com/RobEasthope/protomolecule) monorepo (versions up to and including v6.2.1). It now ships from this standalone repo under the `@acme-skunkworks` scope.
+
+To migrate:
 
 ```bash
-# Update to v6.0.0
-pnpm update @robeasthope/eslint-config@6.0.0
-
-# Auto-fix most import style changes
-pnpm lint:fix
+pnpm remove @robeasthope/eslint-config
+pnpm add -D @acme-skunkworks/eslint-config
 ```
 
-**What changed:**
+Then update your `eslint.config.js` import:
 
-```typescript
-// Before (v5.x - Inline Style)
-import { useState, type FC } from "react";
-
-// After (v6.0.0 - Top-Level Style)
-import type { FC } from "react";
-import { useState } from "react";
-```
-
-**Manual fixes required** for mixed imports:
-
-```typescript
+```javascript
 // Before
-import { useState, type FC, type ReactNode } from "react";
+import eslintConfig from "@robeasthope/eslint-config";
 
-// After - Split manually
-import type { FC, ReactNode } from "react";
-import { useState } from "react";
+// After
+import eslintConfig from "@acme-skunkworks/eslint-config";
 ```
 
-**If you overrode import rules for React Router 7**, you can now remove those overrides as they're built-in.
-
-See the [full migration guide](https://github.com/RobEasthope/protomolecule/issues/333) for details.
-
-### Migrating from v4.x
-
-If you're upgrading from v4.x, you can remove the plugin dependencies:
-
-```bash
-# Update to v5.0.0+
-pnpm update @robeasthope/eslint-config
-
-# Remove plugin dependencies (now bundled)
-pnpm remove astro-eslint-parser eslint-plugin-import-x \
-  eslint-plugin-jsdoc eslint-plugin-jsx-a11y eslint-plugin-n \
-  eslint-plugin-prettier eslint-plugin-promise eslint-plugin-react \
-  eslint-plugin-react-hooks eslint-plugin-regexp eslint-plugin-unicorn \
-  typescript-eslint
-```
+The exported flat-config array is unchanged. No rule changes ship with the rename — for older breaking-change history (v4 → v5 plugin bundling, v5 → v6 top-level type imports) see the original [protomolecule changelog](https://github.com/RobEasthope/protomolecule/blob/main/packages/eslint-config/CHANGELOG.md).
 
 ## 🚀 Usage
 
 In your `eslint.config.js`:
 
 ```javascript
-import eslintConfig from "@robeasthope/eslint-config";
+import eslintConfig from "@acme-skunkworks/eslint-config";
 
 export default [
   ...eslintConfig,
@@ -84,7 +53,7 @@ export default [
 ];
 ```
 
-> **Note:** This config requires ESLint v9+ with flat config. For older ESLint versions, use `@robeasthope/eslint-config@4.x`.
+> **Note:** This config requires ESLint v9+ with flat config.
 
 ## ✨ Features
 
@@ -138,7 +107,7 @@ export default [
 If you need to configure plugins directly, install them separately:
 
 ```javascript
-import eslintConfig from "@robeasthope/eslint-config";
+import eslintConfig from "@acme-skunkworks/eslint-config";
 import pluginReact from "eslint-plugin-react";
 
 export default [
@@ -169,6 +138,6 @@ pnpm lint:fix
 
 ## 📄 License
 
-MIT License - see [LICENSE](../../LICENSE) file in the root directory.
+MIT License — see [LICENSE](LICENSE).
 
 This software is provided "as is", without warranty of any kind. Use at your own risk.
