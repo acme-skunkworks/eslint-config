@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Queue releases instead of cancelling
+
+jobs:
+  release:
+    name: 🚀 Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write       # Create version PR + git tags + GitHub releases
+      pull-requests: write  # Open the Version Packages PR
+      packages: write       # Publish to GitHub Packages
+      id-token: write       # OIDC for npm Trusted Publishing + provenance attestation
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          # RELEASE_PAT lets the version commit bypass branch protection.
+          # Required scopes: repo, workflow. Falls back to GITHUB_TOKEN if unset.
+          token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: 🟢 Setup Node.js (npm registry)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: ⬆️ Upgrade npm for Trusted Publishing
+        # npm Trusted Publishing requires npm CLI v11.5.1+
+        run: npm install -g npm@latest
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build
+        run: pnpm run build
+
+      - name: 🚀 Version or Publish (npm)
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm changeset publish
+          commit: "release: version packages"
+          title: "release: version packages"
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NPM_TOKEN — Trusted Publishing via OIDC.
+          # Provenance is enabled in package.json's publishConfig.
+          HUSKY: 0
+
+      - name: 🟢 Setup Node.js (GitHub Packages)
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com
+          scope: "@acme-skunkworks"
+
+      - name: 📦 Publish to GitHub Packages
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --access public
