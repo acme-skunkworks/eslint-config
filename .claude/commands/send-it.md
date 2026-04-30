@@ -102,6 +102,8 @@ If `git log origin/main..HEAD` is empty, exit with: "No commits ahead of `main`.
 
 ### Step 5: Author or update the changeset
 
+> **Gated on Changesets being installed.** Run `pnpm changeset --version`. If the command fails (Changesets not yet wired up in this repo — tracked in **ASW-70**), skip Steps 5 and 6 entirely, print `/send-it: Changesets not installed yet — skipping changeset step. Tracked in ASW-70.`, and continue at Step 7. The gate auto-opens when ASW-70 lands `@changesets/cli`; no further spec edit is needed at that point.
+
 Versioning lives in [Changesets](https://github.com/changesets/changesets). `/send-it` writes a single `.changeset/<slug>.md` per branch describing the user-facing change and the bump level. The release pipeline (`changesets/action` on `main`) reads these files, bumps versions, writes `CHANGELOG.md`, and tags the release — `/send-it` does **not** do any of that.
 
 1. **Compute the slug** from the current branch name: lowercase, replace non-alphanumeric runs with `-`, trim leading/trailing `-`, truncate to ~60 chars at a word boundary. Examples:
@@ -143,9 +145,11 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
 
 ### Step 6: Validate locally
 
+> **Skipped if Step 5 was skipped** (either by the Changesets-not-installed gate at the top of Step 5, or by the developer-tooling skip rule in Step 5.4).
+
 Run `pnpm changeset status`. If it fails (no changesets when one is expected, or the file is malformed), surface the error and abort. Don't auto-fix; the user resolves.
 
-If Step 5 was skipped (developer-tooling-only branch), `pnpm changeset status` may report "no changesets" — that's expected. The release-pipeline policy on whether unchangesetted PRs are allowed is governed by CI's `changesets/action` config, not by `/send-it`.
+If Step 5 was skipped specifically because the branch is developer-tooling-only (Step 5.4), `pnpm changeset status` may report "no changesets" — that's expected. The release-pipeline policy on whether unchangesetted PRs are allowed is governed by CI's `changesets/action` config, not by `/send-it`.
 
 ### Step 7: Commit the changeset
 
@@ -225,8 +229,8 @@ $ARGUMENTS
 2. Refresh lockfile if `package.json` drifted.
 3. Commit any uncommitted changes as logical atomic commits.
 4. Fetch `origin/main`; confirm commits ahead.
-5. Author or update `.changeset/<slug>.md` (slug from branch; bump from commits).
-6. `pnpm changeset status`.
+5. Author or update `.changeset/<slug>.md` (slug from branch; bump from commits). **Gated** on `pnpm changeset --version` succeeding — skipped until ASW-70 installs Changesets.
+6. `pnpm changeset status`. Skipped if Step 5 was skipped.
 7. Commit `docs(changeset): <title>`.
 8. Push branch.
 9. `gh pr create --draft` (or `--ready`) / `gh pr edit`; `--merge-when-ready` enables auto-merge.
