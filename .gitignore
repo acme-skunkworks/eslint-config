@@ -3,6 +3,10 @@ dist/
 build/
 coverage/
 
+.turbo/
+.eslintcache*
+*.tsbuildinfo
+
 .DS_Store
 *.log
 .npm/
