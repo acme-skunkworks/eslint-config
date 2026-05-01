@@ -58,6 +58,7 @@
   "dependencies": {
     "astro-eslint-parser": "^1.0.0",
     "eslint-config-canonical": "^47.4.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-astro": "^1.0.0",
     "eslint-plugin-import-x": "^4.16.1",
     "eslint-plugin-jsdoc": "^62.9.0",
@@ -70,6 +71,7 @@
     "eslint-plugin-regexp": "^3.1.0",
     "eslint-plugin-unicorn": "^64.0.0",
     "globals": "^17.5.0",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript-eslint": "^8.46.0"
   },
   "devDependencies": {
@@ -77,8 +79,6 @@
     "@robeasthope/markdownlint-config": "^1.1.1",
     "@types/eslint": "^9.6.1",
     "@types/node": "^25.6.0",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "prettier-plugin-tailwindcss": "^0.8.0",
     "rimraf": "^6.0.1",
     "typescript": "^6.0.3"
   },
