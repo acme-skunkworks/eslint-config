@@ -8,13 +8,13 @@ import type { Linter } from "eslint";
  *
  * Property ordering follows a logical grouping:
  * 1. Identity: name, title, type, icon
- * 2. Organization: fieldset, group, groups, fieldsets
- * 3. Behavior: hidden, readOnly
- * 4. Type-specific: options, rows, to, of, marks, styles
- * 5. Content defaults: initialValue, description
- * 6. Document-level: preview, orderings
+ * 2. Fields: fields (placed early so document content stays visually prominent)
+ * 3. Organization: fieldset, group, groups, fieldsets
+ * 4. Behavior: hidden, readOnly
+ * 5. Type-specific: options, rows, to, of, marks, styles
+ * 6. Content defaults: initialValue, description
  * 7. Validation: validation
- * 8. Fields: fields (always last for document types)
+ * 8. Document-level: preview, orderings
  * @see https://perfectionist.dev/rules/sort-objects
  * @see https://www.sanity.io/docs/schema-field-types
  */
@@ -31,7 +31,7 @@ const sanitySchemaPropertyOrdering = {
           { elementNamePattern: "^type$", groupName: "type" },
           { elementNamePattern: "^icon$", groupName: "icon" },
 
-          // 2. Fields array (always last for document types - it's the bulk of the schema)
+          // 2. Fields array (placed early so the schema's content stays visually prominent)
           { elementNamePattern: "^fields$", groupName: "fields" },
 
           // 3. Organization - where does it go?
