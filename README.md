@@ -63,7 +63,7 @@ pnpm add -D @acme-skunkworks/eslint-config
 The default export still works during the migration window, but is **deprecated** and will be removed in a future major:
 
 ```js
-// Old (still works in v7, deprecated)
+// Old (still works in v1, deprecated)
 import eslintConfig from "@acme-skunkworks/eslint-config";
 export default [...eslintConfig];
 
@@ -74,7 +74,7 @@ export default [...base, typescript, ...frameworkRouting];
 
 If your project was a Sanity / Storybook / Astro consumer, opt-in to those presets explicitly. The default export bundled all of them; the new shape makes the dependencies explicit.
 
-### What's new in v7
+### What's new in v1
 
 - **Tempest fold-in.** Plugin versions bumped to current; `complexity`, `e2e`, and `tableComponents` are new opt-in presets ported from Tempest. See `MIGRATION_FROM_PROTOMOLECULE.md` for the per-preset diff.
 - **Named-export composition.** Each preset is independently importable; consumers compose what they need.
