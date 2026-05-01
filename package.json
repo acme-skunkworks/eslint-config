@@ -1,0 +1,96 @@
+{
+  "name": "@acme-skunkworks/eslint-config",
+  "version": "1.0.0",
+  "description": "Shared ESLint configuration with TypeScript and React support",
+  "keywords": [
+    "eslint",
+    "eslint-config",
+    "linting",
+    "typescript",
+    "astro",
+    "code-quality"
+  ],
+  "homepage": "https://github.com/acme-skunkworks/eslint-config#readme",
+  "bugs": {
+    "url": "https://github.com/acme-skunkworks/eslint-config/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acme-skunkworks/eslint-config.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Rob Easthope",
+    "url": "https://github.com/RobEasthope"
+  },
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf node_modules dist",
+    "format": "npx prettier --write .",
+    "lint": "eslint 'index.ts' 'rules/**/*.ts' --cache --cache-location ./.eslintcache",
+    "lint:fix": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache",
+    "lint:fix-staged": "eslint 'index.ts' 'rules/**/*.ts' --fix --max-warnings=Infinity --cache --cache-location ./.eslintcache || true",
+    "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
+    "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
+    "prepublishOnly": "pnpm run build",
+    "release": "pnpm run build && changeset publish",
+    "release:manual": "pnpm run build && npm publish --access public --provenance=false",
+    "release:manual:dry": "pnpm run build && npm publish --access public --provenance=false --dry-run",
+    "sort-pkg-json": "npx sort-package-json",
+    "tsc": "tsc --noEmit",
+    "version": "changeset version"
+  },
+  "dependencies": {
+    "astro-eslint-parser": "^1.0.0",
+    "eslint-config-canonical": "^47.4.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-astro": "^1.0.0",
+    "eslint-plugin-import-x": "^4.16.1",
+    "eslint-plugin-jsdoc": "^62.9.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-n": "^17.23.1",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-regexp": "^3.1.0",
+    "eslint-plugin-unicorn": "^64.0.0",
+    "globals": "^17.5.0",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript-eslint": "^8.46.0"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@robeasthope/markdownlint-config": "^1.1.1",
+    "@types/eslint": "^9.6.1",
+    "@types/node": "^25.6.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "eslint": "^8.57.0 || ^9.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
