@@ -54,7 +54,23 @@ The package is a flat-config preset composer. Source is TypeScript; consumers im
 - GitHub Packages via `GITHUB_TOKEN`.
 - Provenance is on by default via `publishConfig.provenance: true`.
 
-Don't reintroduce `NPM_TOKEN` unless OIDC is verified broken.
+Don't reintroduce `NPM_TOKEN` **as a CI secret** unless OIDC is verified broken. The local-only `NPM_TOKEN` documented in `.env.example` is a different concern — it's for human-driven manual publishes from a laptop and never enters CI.
+
+**Manual publish (backup).** Used for the one-time bootstrap publish (npm has no pending-publisher flow, so the package must exist before Trusted Publisher can be configured) and as a fallback when CI is down. Two auth options:
+
+- `npm login` once (browser flow); `npm publish` prompts for an OTP from your authenticator. No token to manage. Recommended.
+- Or copy `.env.example` → `.env`, fill in `NPM_TOKEN` (Granular Access Token from npmjs.com → Settings → Tokens), then either `source .env` before publishing or write the token to `~/.npmrc`.
+
+Then run:
+
+```bash
+pnpm run release:manual:dry    # builds + simulates publish (verify tarball + auth)
+pnpm run release:manual        # builds + actually publishes
+```
+
+`--provenance=false` is intentional — provenance attestation requires an OIDC issuer (GitHub Actions), which a laptop doesn't have. Manual publishes ship without the provenance badge; CI publishes have it.
+
+Note: don't try `pnpm run release:manual -- --dry-run`. The chained-script + `--` separator confuses npm into treating `--dry-run` as a positional package spec. Use the dedicated `release:manual:dry` script instead.
 
 **Manual changeset.** `pnpm changeset` (interactive) or hand-write `.changeset/<slug>.md`:
 

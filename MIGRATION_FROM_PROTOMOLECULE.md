@@ -44,13 +44,13 @@ The port is a clean copy of the source files with these deliberate edits:
 
 ## Tempest fold-in deltas
 
-For context on why we're folding Tempest's deltas in: Tempest's internal `@tempest/eslint-config` (`/Users/rob/Code/tempest/packages/eslint-config`, private — only ships `dist/` in tree) was originally copied from `@robeasthope/eslint-config` and has since diverged. v7.0.0 of `@acme-skunkworks/eslint-config` is the union of the two lineages.
+For context on why we're folding Tempest's deltas in: Tempest's internal `@tempest/eslint-config` (`/Users/rob/Code/tempest/packages/eslint-config`, private — only ships `dist/` in tree) was originally copied from `@robeasthope/eslint-config` and has since diverged. v1.0.0 of `@acme-skunkworks/eslint-config` is the union of the two lineages.
 
 Tempest's source files aren't in tree, so this diff is between Tempest's compiled `dist/rules/*.js` and our ported `rules/*.ts`.
 
 ### Plugin version deltas
 
-Tempest is generally newer than protomolecule. v7.0.0's bumps will go to current latest at execution time, so Tempest's pins are a starting point not the ceiling.
+Tempest is generally newer than protomolecule. v1.0.0's bumps will go to current latest at execution time, so Tempest's pins are a starting point not the ceiling.
 
 | Plugin | protomolecule (ours) | Tempest |
 |---|---|---|
@@ -84,11 +84,11 @@ Tempest also adds `prettier: ^3.8.1` as a `peerDependency`. We adopt this — it
 | `reactRouterExceptions` | identical | |
 | `storybook` | identical | |
 | `typescriptOverrides` | identical | |
-| `preferences` | **delta** | Tempest's `import/no-extraneous-dependencies.devDependencies` allow-list adds `**/*.setup.{ts,js}`, `**/test-utils.{ts,tsx}`, `**/routes.ts`. Folded in for v7.0.0. |
-| `testFiles` | **delta** | Tempest adds `"@typescript-eslint/triple-slash-reference": "off"` to support Vitest setup files using `/// <reference types="..." />` to augment global types. Folded in for v7.0.0. |
+| `preferences` | **delta** | Tempest's `import/no-extraneous-dependencies.devDependencies` allow-list adds `**/*.setup.{ts,js}`, `**/test-utils.{ts,tsx}`, `**/routes.ts`. Folded in for v1.0.0. |
+| `testFiles` | **delta** | Tempest adds `"@typescript-eslint/triple-slash-reference": "off"` to support Vitest setup files using `/// <reference types="..." />` to augment global types. Folded in for v1.0.0. |
 | `sanity` | **Tempest dropped** | Tempest doesn't use Sanity, so the preset was removed. We **keep** the preset and make it an opt-in named export — consumers in non-Sanity projects don't import it. |
 
-### New presets in Tempest (ported as opt-in named exports for v7.0.0)
+### New presets in Tempest (ported as opt-in named exports for v1.0.0)
 
 | Preset | What it does | Generalisation applied during fold-in |
 |---|---|---|
@@ -104,7 +104,7 @@ Tempest's order: `ignoredFileAndFolders → ...canonicalAuto → packageJson →
 
 Ours stays: `ignoredFileAndFolders → ...canonicalAuto → packageJson → commonjs → storybook → typescriptOverrides → testFiles → ...astro → preferences → reactRouterExceptions → frameworkRouting → ...sanity`.
 
-For v7.0.0's default export the composition is `base → typescript → react → frameworkRouting` (per the named-export restructure plan); the rest are opt-in named exports. The Tempest-only presets (complexity, e2e, tableComponents) and `sanity` all become opt-in named exports.
+For v1.0.0's default export the composition is `base → typescript → react → frameworkRouting` (per the named-export restructure plan); the rest are opt-in named exports. The Tempest-only presets (complexity, e2e, tableComponents) and `sanity` all become opt-in named exports.
 
 ### Conflict resolution
 

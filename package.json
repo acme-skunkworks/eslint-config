@@ -1,6 +1,6 @@
 {
   "name": "@acme-skunkworks/eslint-config",
-  "version": "6.2.1",
+  "version": "1.0.0",
   "description": "Shared ESLint configuration with TypeScript and React support",
   "keywords": [
     "eslint",
@@ -48,6 +48,8 @@
     "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "prepublishOnly": "pnpm run build",
     "release": "pnpm run build && changeset publish",
+    "release:manual": "pnpm run build && npm publish --access public --provenance=false",
+    "release:manual:dry": "pnpm run build && npm publish --access public --provenance=false --dry-run",
     "sort-pkg-json": "npx sort-package-json",
     "tsc": "tsc --noEmit",
     "version": "changeset version"
