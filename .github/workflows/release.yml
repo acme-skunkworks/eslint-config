@@ -41,8 +41,11 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: ⬆️ Upgrade npm for Trusted Publishing
-        # npm Trusted Publishing requires npm CLI v11.5.1+
-        run: npm install -g npm@latest
+        # npm Trusted Publishing requires npm CLI v11.5.1+.
+        # The bundled npm 10.9.7 in the ubuntu-latest runner image is broken on
+        # self-upgrade (`Cannot find module 'promise-retry'`), so install via pnpm
+        # — PNPM_HOME is already on PATH, so the new npm shadows the bundled one.
+        run: pnpm add -g npm@latest
 
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
