@@ -51,7 +51,7 @@
     "release": "pnpm run build && changeset publish",
     "release:manual": "pnpm run build && npm publish --access public --provenance=false",
     "release:manual:dry": "pnpm run build && npm publish --access public --provenance=false --dry-run",
-    "sort-pkg-json": "npx sort-package-json",
+    "sort-pkg-json": "sort-package-json",
     "tsc": "tsc --noEmit",
     "version": "changeset version"
   },
@@ -63,7 +63,7 @@
       "bash -c 'pnpm lint:fix-staged \"$@\" || true' --"
     ],
     "**/package.json": [
-      "bash -c 'npx sort-package-json \"$@\" || true' --",
+      "bash -c 'sort-package-json \"$@\" || true' --",
       "bash -c 'pnpm exec eslint --fix --cache --cache-location ./.eslintcache \"$@\" || true' --"
     ],
     "**/*.{md,mdx}": [
@@ -98,6 +98,7 @@
     "lint-staged": "^16.3.2",
     "markdownlint-cli2": "^0.18.1",
     "rimraf": "^6.0.1",
+    "sort-package-json": "^3.6.1",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
