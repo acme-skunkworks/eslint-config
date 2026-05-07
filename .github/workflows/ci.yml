@@ -42,3 +42,46 @@ jobs:
       - name: 📝 Changeset status
         run: pnpm changeset status --since=origin/${{ github.base_ref }}
         continue-on-error: true
+
+  yaml-lint:
+    name: 📝 YAML & Workflows
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: 📦 Cache yamllint (pip --user)
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: ${{ runner.os }}-python-yamllint-1.37.1-${{ hashFiles('.yamllint.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-python-yamllint-1.37.1-
+            ${{ runner.os }}-python-yamllint-
+
+      - name: 📦 Cache actionlint binary
+        uses: actions/cache@v4
+        with:
+          path: ./actionlint
+          key: ${{ runner.os }}-actionlint-1.7.5
+          restore-keys: |
+            ${{ runner.os }}-actionlint-
+
+      - name: 📝 Run yamllint
+        run: |
+          if ! command -v yamllint >/dev/null 2>&1; then
+            pip install --user yamllint==1.37.1
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          fi
+          yamllint .
+
+      - name: 🔍 Run actionlint
+        run: |
+          if [ ! -f ./actionlint ]; then
+            DOWNLOAD_URL="https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/scripts/download-actionlint.bash"
+            bash <(curl -fsSL "$DOWNLOAD_URL")
+          fi
+          ./actionlint -color

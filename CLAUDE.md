@@ -15,6 +15,8 @@ pnpm tsc            # type-check only (no emit)
 pnpm lint           # lint this package's own source (index.ts + rules/**)
 pnpm lint:fix       # auto-fix
 pnpm lint:md        # markdownlint
+pnpm lint:yaml      # yamllint . (semantic YAML check; warnings non-blocking)
+pnpm lint:workflows # actionlint on .github/workflows/
 pnpm format         # prettier write
 pnpm changeset      # interactive changeset (or write .changeset/<slug>.md by hand)
 ```
@@ -25,13 +27,24 @@ Node 22 required (`.nvmrc`, `engines.node: ">=22"`, `engine-strict=true` in `.np
 
 `pnpm install` runs `prepare` (`husky`), which installs the hooks under `.husky/`. Three hooks fire:
 
-- **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes only the staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}`, `sort-package-json` + `eslint --fix` for `**/package.json` (the `packageJson` preset's glob applies, plus any `jsonc/*` rules from canonical), `markdownlint-cli2 --fix` for `**/*.{md,mdx}`. Each task is wrapped in `bash -c '… "$@" || true' --` so the staged file paths are passed through to the tool _and_ the fallback is shell-evaluated. **Non-blocking by design** — the hook auto-fixes; CI is the gate.
+- **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes only the staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}`, `sort-package-json` + `eslint --fix` for `**/package.json` (the `packageJson` preset's glob applies, plus any `jsonc/*` rules from canonical), `markdownlint-cli2 --fix` for `**/*.{md,mdx}`, `yamllint` (read-only check) for `**/*.{yml,yaml}`, `actionlint` (read-only check) for `.github/workflows/*.{yml,yaml}`. Each task is wrapped in `bash -c '… "$@" --` so the staged file paths are passed through. The auto-fixers carry an `|| true` fallback so they never block — CI is the gate. The two YAML linters intentionally do **not** carry the `|| true` fallback: semantic errors block the commit (warnings don't). yamllint and actionlint are best-effort: if the tool isn't on `PATH` locally, the hook prints a platform-appropriate `brew install …` (or `pip` / `curl`) hint and skips. CI still enforces.
 - **`commit-msg`** — strips any `Co-Authored-By: Claude … <noreply@anthropic.com>` trailer. Backstops the global `~/.claude/CLAUDE.md` rule (Claude is tooling, not a contributor).
 - **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) and the changesets release commit (`release: version packages`) bypass.
 
 Hooks are dormant in CI: `release.yml` and `ci.yml` set `HUSKY=0` so the `prepare` script no-ops during `pnpm install`.
 
 To bypass any hook in an emergency: `git commit --no-verify` or `git push --no-verify` — not recommended.
+
+## Validating workflows and YAML
+
+Two non-Node tools augment Prettier's formatting pass with the semantic checks Prettier can't see (Actions schema, `${{ … }}` expression typos, duplicate keys, etc.):
+
+- **`actionlint` v1.7.5** — Go binary. Local install: `brew install actionlint` (macOS) or `bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/scripts/download-actionlint.bash)` elsewhere. CI downloads the official tarball and caches it.
+- **`yamllint` 1.37.1** — Python tool. Local install: `brew install yamllint` (macOS) or `pip install --user yamllint==1.37.1` elsewhere. CI installs via pip and caches `~/.local`.
+
+Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-length / indentation to warnings (Prettier owns formatting), allows the GitHub Actions truthy values (`on`, `off`, `yes`, `no`), and ignores `node_modules/`, `dist/`, `.turbo/`, `pnpm-lock.yaml`. No `.actionlintrc.yaml` — defaults are fine for this repo.
+
+Enforcement: pre-commit is best-effort (skip with install hint when missing); CI is the `yaml-lint` job in `ci.yml`, parallel to `build-and-lint`, always enforced.
 
 ## Architecture
 
