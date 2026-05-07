@@ -25,7 +25,7 @@ Node 22 required (`.nvmrc`, `engines.node: ">=22"`, `engine-strict=true` in `.np
 
 `pnpm install` runs `prepare` (`husky`), which installs the hooks under `.husky/`. Three hooks fire:
 
-- **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}` (via the existing `lint:fix-staged` script), `sort-package-json` + `eslint --fix` for `**/package.json` (the `packageJson` preset's `**/package.json` glob applies, plus any `jsonc/*` rules from canonical), `markdownlint-cli2 --fix` for `**/*.{md,mdx}`. **Non-blocking by design** (each command has `|| true`) — the hook auto-fixes; CI is still the gate.
+- **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes only the staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}`, `sort-package-json` + `eslint --fix` for `**/package.json` (the `packageJson` preset's glob applies, plus any `jsonc/*` rules from canonical), `markdownlint-cli2 --fix` for `**/*.{md,mdx}`. Each task is wrapped in `bash -c '… "$@" || true' --` so the staged file paths are passed through to the tool _and_ the fallback is shell-evaluated. **Non-blocking by design** — the hook auto-fixes; CI is the gate.
 - **`commit-msg`** — strips any `Co-Authored-By: Claude … <noreply@anthropic.com>` trailer. Backstops the global `~/.claude/CLAUDE.md` rule (Claude is tooling, not a contributor).
 - **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) and the changesets release commit (`release: version packages`) bypass.
 

@@ -43,7 +43,6 @@
     "format": "npx prettier --write .",
     "lint": "eslint 'index.ts' 'rules/**/*.ts' --cache --cache-location ./.eslintcache",
     "lint:fix": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache",
-    "lint:fix-staged": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache || true",
     "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "prepare": "husky",
@@ -60,7 +59,7 @@
       "prettier --write --ignore-unknown"
     ],
     "**/*.{ts,tsx,js,mjs,cjs}": [
-      "bash -c 'pnpm lint:fix-staged \"$@\" || true' --"
+      "bash -c 'pnpm exec eslint --fix --cache --cache-location ./.eslintcache \"$@\" || true' --"
     ],
     "**/package.json": [
       "bash -c 'sort-package-json \"$@\" || true' --",
