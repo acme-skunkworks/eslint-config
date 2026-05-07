@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 # Strip any Co-Authored-By: Claude ... <noreply@anthropic.com> trailers.
 # Claude Code's default system prompt adds this; per repo policy Claude is
