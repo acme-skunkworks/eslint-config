@@ -21,6 +21,18 @@ pnpm changeset      # interactive changeset (or write .changeset/<slug>.md by ha
 
 Node 22 required (`.nvmrc`, `engines.node: ">=22"`, `engine-strict=true` in `.npmrc`).
 
+## Local hooks
+
+`pnpm install` runs `prepare` (`husky`), which installs the hooks under `.husky/`. Three hooks fire:
+
+- **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}` (via the existing `lint:fix-staged` script), `sort-package-json` for `package.json`, `markdownlint-cli2 --fix` for `**/*.{md,mdx}`. **Non-blocking by design** (each command has `|| true`) — the hook auto-fixes; CI is still the gate.
+- **`commit-msg`** — strips any `Co-Authored-By: Claude … <noreply@anthropic.com>` trailer. Backstops the global `~/.claude/CLAUDE.md` rule (Claude is tooling, not a contributor).
+- **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) and the changesets release commit (`release: version packages`) bypass.
+
+Hooks are dormant in CI: `release.yml` and `ci.yml` set `HUSKY=0` so the `prepare` script no-ops during `pnpm install`.
+
+To bypass any hook in an emergency: `git commit --no-verify` or `git push --no-verify` — not recommended.
+
 ## Architecture
 
 The package is a flat-config preset composer. Source is TypeScript; consumers import the compiled `dist/index.js`.
@@ -102,6 +114,7 @@ The very first publish of a brand-new npm package **cannot go through CI**. Two 
 So bootstrap is always: manual first publish → configure Trusted Publisher → CI takes over from publish #2.
 
 **Pre-flight:**
+
 - You belong to the target npm org with publish rights.
 - npm CLI ≥ 11.5.1 (`npm install -g npm@latest`).
 - Account has 2FA enabled with **recovery codes generated and saved** (you'll need one).
@@ -119,6 +132,7 @@ So bootstrap is always: manual first publish → configure Trusted Publisher →
    ```
 
    Generate codes at npmjs.com → Profile → Two-Factor Authentication → Manage Recovery Codes. Each is single-use. The format is a long hex string (not a 6-digit TOTP) — npm accepts it as `--otp` anyway.
+
 5. After publish succeeds, **immediately regenerate recovery codes**. The one you used is burnt; if you transmitted it anywhere (chat, paste buffer with cloud sync, screen share), treat the rest of the set as compromised.
 6. Configure Trusted Publisher: `https://www.npmjs.com/package/<name>/access` → GitHub Actions → org, repo, workflow filename (`release.yml`), environment blank.
 7. From here on, releases go through CI cleanly.
@@ -133,7 +147,7 @@ Saving these to spare the next bootstrap from rediscovering them:
 - Generating a Granular token with bypass-2FA enabled — works for publish #2+, NOT publish #1.
 - `npm login --auth-type=web` to refresh the session token. Auth swaps successfully but the publish endpoint still demands OTP.
 - `oathtool` for generating TOTP — only works if you have a TOTP secret, and **npm has phased TOTP out of new accounts** (only passkeys + recovery codes are offered now).
-- Disabling 2FA entirely — npm's policy *requires* either 2FA or a bypass-2FA token; you can't disable both. And the bypass token doesn't help for publish #1 anyway.
+- Disabling 2FA entirely — npm's policy _requires_ either 2FA or a bypass-2FA token; you can't disable both. And the bypass token doesn't help for publish #1 anyway.
 
 Recovery codes are the answer because they're the only OTP-shaped value an npm account can produce when its only 2FA factor is a passkey.
 

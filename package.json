@@ -24,7 +24,6 @@
     "url": "https://github.com/RobEasthope"
   },
   "type": "module",
-  "packageManager": "pnpm@10.33.0",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -47,6 +46,7 @@
     "lint:fix-staged": "eslint 'index.ts' 'rules/**/*.ts' --fix --max-warnings=Infinity --cache --cache-location ./.eslintcache || true",
     "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
+    "prepare": "husky",
     "prepublishOnly": "pnpm run build",
     "release": "pnpm run build && changeset publish",
     "release:manual": "pnpm run build && npm publish --access public --provenance=false",
@@ -54,6 +54,20 @@
     "sort-pkg-json": "npx sort-package-json",
     "tsc": "tsc --noEmit",
     "version": "changeset version"
+  },
+  "lint-staged": {
+    "**/*": [
+      "prettier --write --ignore-unknown"
+    ],
+    "**/*.{ts,tsx,js,mjs,cjs}": [
+      "bash -c 'pnpm lint:fix-staged \"$@\" || true' --"
+    ],
+    "**/package.json": [
+      "bash -c 'npx sort-package-json \"$@\" || true' --"
+    ],
+    "**/*.{md,mdx}": [
+      "bash -c 'markdownlint-cli2 --fix --config ./.markdownlint-cli2.jsonc \"$@\" || true' --"
+    ]
   },
   "dependencies": {
     "astro-eslint-parser": "^1.0.0",
@@ -79,6 +93,9 @@
     "@robeasthope/markdownlint-config": "^1.1.1",
     "@types/eslint": "^9.6.1",
     "@types/node": "^25.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "markdownlint-cli2": "^0.18.1",
     "rimraf": "^6.0.1",
     "typescript": "^6.0.3"
   },
@@ -86,6 +103,7 @@
     "eslint": "^8.57.0 || ^9.0.0",
     "prettier": "^3.0.0"
   },
+  "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22"
   },
