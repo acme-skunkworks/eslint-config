@@ -1,12 +1,10 @@
 {
+  // Globs intentionally omitted: markdownlint-cli2 v0.18 unions config globs
+  // with CLI file arguments, which makes the lint-staged hook auto-fix every
+  // .md file in the repo on every staged-md run (drive-by churn). The
+  // `lint:md` script in package.json passes its own globs on the CLI, so
+  // config globs are redundant for the standalone case.
   "config": {
     "extends": "@robeasthope/markdownlint-config",
   },
-  "globs": [
-    "**/*.{md,mdx}",
-    "!**/node_modules/**",
-    "!**/dist/**",
-    "!**/.turbo/**",
-    "!**/.astro/**",
-  ],
 }
