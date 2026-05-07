@@ -43,7 +43,7 @@
     "format": "npx prettier --write .",
     "lint": "eslint 'index.ts' 'rules/**/*.ts' --cache --cache-location ./.eslintcache",
     "lint:fix": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache",
-    "lint:fix-staged": "eslint 'index.ts' 'rules/**/*.ts' --fix --max-warnings=Infinity --cache --cache-location ./.eslintcache || true",
+    "lint:fix-staged": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache || true",
     "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "prepare": "husky",
@@ -63,7 +63,8 @@
       "bash -c 'pnpm lint:fix-staged \"$@\" || true' --"
     ],
     "**/package.json": [
-      "bash -c 'npx sort-package-json \"$@\" || true' --"
+      "bash -c 'npx sort-package-json \"$@\" || true' --",
+      "bash -c 'pnpm exec eslint --fix --cache --cache-location ./.eslintcache \"$@\" || true' --"
     ],
     "**/*.{md,mdx}": [
       "bash -c 'markdownlint-cli2 --fix --config ./.markdownlint-cli2.jsonc \"$@\" || true' --"
