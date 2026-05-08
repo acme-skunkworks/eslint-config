@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write       # Create version PR + git tags + GitHub releases
-      pull-requests: write  # Open the Version Packages PR
-      packages: write       # Publish to GitHub Packages
-      id-token: write       # OIDC for npm Trusted Publishing + provenance attestation
+      contents: write # Create version PR + git tags + GitHub releases
+      pull-requests: write # Open the Version Packages PR
+      packages: write # Publish to GitHub Packages
+      id-token: write # OIDC for npm Trusted Publishing + provenance attestation
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
@@ -66,6 +66,21 @@ jobs:
           # No NPM_TOKEN — Trusted Publishing via OIDC.
           # Provenance is enabled in package.json's publishConfig.
           HUSKY: 0
+
+      - name: 📝 Retitle release PR with package@version
+        # changesets/action's `title` input is a static string — rewrite it to
+        # `<name>@<version>` once the action has bumped package.json on
+        # changeset-release/main. Skipped on publish runs and no-changeset runs
+        # (pullRequestNumber is empty in both cases).
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin changeset-release/main
+          VERSION=$(git show FETCH_HEAD:package.json | jq -r '.version')
+          NAME=$(git show FETCH_HEAD:package.json | jq -r '.name')
+          gh pr edit "${{ steps.changesets.outputs.pullRequestNumber }}" \
+            --title "${NAME}@${VERSION}"
 
       - name: 🟢 Setup Node.js (GitHub Packages)
         if: steps.changesets.outputs.published == 'true'
