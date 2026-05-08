@@ -65,11 +65,29 @@ export const frameworkRouting: Linter.Config[] = [
  */
 export const testing: Linter.Config = testFiles;
 
+/**
+ * Opt-in. Astro framework support — pull in for projects with `*.astro` files.
+ */
 export { astro } from "./rules/astro.js";
+/**
+ * Opt-in. Cyclomatic-complexity exemption for orchestration scripts under `scripts/**`.
+ */
 export { complexity } from "./rules/complexity.js";
+/**
+ * Opt-in. Playwright fixture exception — pull in for projects with end-to-end tests under `e2e/**`.
+ */
 export { e2e } from "./rules/e2e.js";
+/**
+ * Opt-in. Sanity Studio schema ordering and structure-file exceptions — pull in for projects using Sanity.
+ */
 export { sanity } from "./rules/sanity.js";
+/**
+ * Opt-in. Storybook story-file overrides — pull in for projects with `*.stories.{ts,tsx}` files.
+ */
 export { storybook } from "./rules/storybook.js";
+/**
+ * Opt-in. TanStack Table / Refine cell-renderer exception — pull in for projects with `*Table.tsx` files.
+ */
 export { tableComponents } from "./rules/tableComponents.js";
 
 /**

@@ -1,5 +1,19 @@
 import type { Linter } from "eslint";
 
+/**
+ * Part of `base` — applied to every consumer. The largest preset, and the
+ * one most consumers will reach for when they want to override something.
+ *
+ * Covers function style, type-import style, the prettier integration, the
+ * import resolver (with monorepo support), `no-console`, and the
+ * React Router 7 / Remix / SvelteKit compatibility block (top-level type
+ * imports, empty-pattern allowance for typed framework args, CSS-import
+ * carve-out, devDependencies allowlist for test / config / scripts files).
+ *
+ * Per-rule rationale lives inline below; the relevant protomolecule issues
+ * (#299 React Router 7 ergonomics, #327 monorepo lint-staged paths,
+ * #333 virtual modules + verbatimModuleSyntax) are linked at each site.
+ */
 export const preferences = {
   files: ["**/*.{ts,tsx,js,jsx,mjs}"],
   languageOptions: {

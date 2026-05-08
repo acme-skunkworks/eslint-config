@@ -1,6 +1,14 @@
 import type { Linter } from "eslint";
 import { configs } from "eslint-plugin-astro";
 
+/**
+ * Opt-in. Pull in for projects using Astro (`astro` dep, `*.astro` files).
+ *
+ * Spreads `eslint-plugin-astro/flat/recommended` and adds an Astro-specific
+ * import-resolver allowlist for the patterns ESLint's static resolver can't
+ * follow: `astro:*` virtual modules (`astro:content`, `astro:assets`), the
+ * `@/` tsconfig path alias, and direct `.astro` file imports.
+ */
 export const astro: Linter.Config[] = [
   ...configs["flat/recommended"],
   {

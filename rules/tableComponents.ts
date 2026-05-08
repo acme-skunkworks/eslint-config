@@ -1,6 +1,9 @@
 import type { Linter } from "eslint";
 
 /**
+ * Opt-in. Pull in for projects using TanStack Table or Refine (column-cell
+ * renderers in `*Table.tsx` files).
+ *
  * ESLint override for table cell-renderer components.
  *
  * TanStack Table / Refine column definitions require inline cell renderer

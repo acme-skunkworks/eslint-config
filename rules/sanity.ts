@@ -129,10 +129,16 @@ const sanityStructure = {
 } satisfies Linter.Config;
 
 /**
- * Combined Sanity ESLint configurations
+ * Opt-in. Pull in for projects using Sanity Studio (`sanity` / `@sanity/*`
+ * deps; schema files matching `*.schema.ts`; structure files at
+ * `sanity.structure.ts` or `deskStructure.ts`).
  *
- * Exports an array containing all Sanity-related ESLint configs:
- * - Schema property ordering for *.schema.ts files
- * - Structure file exceptions for structure.ts and deskStructure.ts
+ * Combined Sanity ESLint configuration. Exports an array of two configs
+ * documented inline above: schema property ordering for `*.schema.ts` (a
+ * perfectionist `sort-objects` rule with custom groups so identity → fields
+ * → behavior → validation appear in a deterministic, readable order) and
+ * structure-file exceptions (allows the `S => S.list()` arrow-function
+ * pattern and the canonical single-letter `S` parameter that Sanity's docs
+ * universally use for the StructureBuilder).
  */
 export const sanity = [sanitySchemaPropertyOrdering, sanityStructure];
