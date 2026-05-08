@@ -1,6 +1,10 @@
 import type { Linter } from "eslint";
 
 /**
+ * Re-exported as part of `frameworkRouting` (composed with `reactRouterExceptions`).
+ * Pull in for projects using a meta-framework with file-based routing —
+ * Next.js, React Router 7, Remix, SvelteKit, Astro, Nuxt. Spread after `base`.
+ *
  * ESLint configuration for framework-based file routing patterns.
  *
  * Modern meta-frameworks (Next.js, React Router, Remix, SvelteKit, Astro, Nuxt)

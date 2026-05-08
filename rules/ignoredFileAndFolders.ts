@@ -1,5 +1,14 @@
 import type { Linter } from "eslint";
 
+/**
+ * Part of `base` — applied to every consumer.
+ *
+ * Global ignore list: build artifacts (`dist`, `build`, `storybook-static`,
+ * `coverage`), tooling state directories (`.turbo`, `.vercel`, `.astro`,
+ * `.react-router`, `.wrangler`, `.vscode`, `.claude`), `node_modules`, and
+ * the lock file. Also ignores `tsconfig.json` and the consumer's own
+ * `eslint.config.{ts,mjs}` — those are tooling input, not source to lint.
+ */
 export const ignoredFileAndFolders = {
   ignores: [
     "**/.react-router/**",

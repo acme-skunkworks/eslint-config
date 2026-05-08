@@ -1,6 +1,9 @@
 import type { Linter } from "eslint";
 
 /**
+ * Opt-in. Pull in for repos with orchestration / maintenance scripts under
+ * `scripts/**`.
+ *
  * Complexity overrides for file patterns where a cyclomatic-complexity exemption
  * is structural rather than a code smell.
  *

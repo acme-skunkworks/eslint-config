@@ -2,6 +2,8 @@
 import type { Linter } from "eslint";
 
 /**
+ * Opt-in. Pull in for projects using Playwright with fixtures under `e2e/**`.
+ *
  * ESLint override for Playwright end-to-end fixtures.
  *
  * Playwright's `test.extend()` / `test.use()` pattern involves passing fixture
