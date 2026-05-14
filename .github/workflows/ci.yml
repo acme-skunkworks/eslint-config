@@ -72,30 +72,49 @@ jobs:
             ${{ runner.os }}-actionlint-
 
       - name: 📝 Run yamllint
-        run: |
-          if ! command -v yamllint >/dev/null 2>&1; then
-            # --break-system-packages: Ubuntu 24.04 ships Python 3.12 which
-            # enforces PEP 668 (externally-managed-environment) on the system
-            # Python. Real GHA `ubuntu-latest` has --user installs whitelisted,
-            # so the flag is a no-op there, but inside container images like
-            # catthehacker/ubuntu (used by `act`) the gate is hit and pip
-            # refuses. The flag makes the workflow portable to local `act` runs
-            # without changing GHA behaviour. See ASW-164 / CLAUDE.md.
-            pip install --user --break-system-packages yamllint==1.37.1
-            # GITHUB_PATH propagates ~/.local/bin to *subsequent* steps. Real
-            # GHA runner images also pre-add it to the *current* shell's PATH;
-            # the catthehacker `act` image (running as root) does not, so
-            # `yamllint` further down this step wouldn't be found without the
-            # explicit export.
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-            export PATH="$HOME/.local/bin:$PATH"
-          fi
-          yamllint .
+        # Logic lives in infrastructure/scripts/ensure-yamllint.sh — install
+        # if missing, then run. Tested via bats; see infrastructure/tests/.
+        run: bash infrastructure/scripts/ensure-yamllint.sh
 
       - name: 🔍 Run actionlint
-        run: |
-          if [ ! -f ./actionlint ]; then
-            DOWNLOAD_URL="https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/scripts/download-actionlint.bash"
-            bash <(curl -fsSL "$DOWNLOAD_URL")
-          fi
-          ./actionlint -color
+        # Logic lives in infrastructure/scripts/ensure-actionlint.sh — download
+        # the pinned binary if missing, then run. Tested via bats.
+        run: bash infrastructure/scripts/ensure-actionlint.sh
+
+  infra:
+    name: 🧪 Infrastructure scripts
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🐚 Install shell tooling (bats, shellcheck)
+        run: sudo apt-get update && sudo apt-get install -y bats shellcheck
+
+      - name: 🔬 Shellcheck
+        run: pnpm lint:sh
+
+      - name: 🧪 Vitest
+        run: pnpm test
+
+      - name: 🧪 Bats
+        run: pnpm test:sh

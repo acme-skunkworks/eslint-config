@@ -27,7 +27,7 @@ for actor in "$LATEST_AUTHOR" "$LATEST_COMMITTER"; do
   esac
 done
 
-while read -r local_ref local_sha remote_ref remote_sha; do
+while read -r _local_ref local_sha remote_ref _remote_sha; do
   case "$remote_ref" in
     refs/heads/main)
       printf '\n\033[0;31m❌ ERROR: Direct pushes to '\''main'\'' branch are not allowed\033[0m\n\n'

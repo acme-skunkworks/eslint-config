@@ -68,19 +68,13 @@ jobs:
           HUSKY: 0
 
       - name: 📝 Retitle release PR with package@version
-        # changesets/action's `title` input is a static string — rewrite it to
-        # `<name>@<version>` once the action has bumped package.json on
-        # changeset-release/main. Skipped on publish runs and no-changeset runs
-        # (pullRequestNumber is empty in both cases).
+        # Logic lives in infrastructure/scripts/retitle-release-pr.ts so it's
+        # testable in isolation; see infrastructure/tests/.
         if: steps.changesets.outputs.pullRequestNumber != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git fetch origin changeset-release/main
-          VERSION=$(git show FETCH_HEAD:package.json | jq -r '.version')
-          NAME=$(git show FETCH_HEAD:package.json | jq -r '.name')
-          gh pr edit "${{ steps.changesets.outputs.pullRequestNumber }}" \
-            --title "${NAME}@${VERSION}"
+          PR_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+        run: pnpm tsx infrastructure/scripts/retitle-release-pr.ts
 
       - name: 🟢 Setup Node.js (GitHub Packages)
         if: steps.changesets.outputs.published == 'true'

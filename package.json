@@ -47,10 +47,11 @@
     "ci:watch": "gh run watch $(gh run list -L 1 --json databaseId -q '.[0].databaseId // empty')",
     "clean": "rimraf node_modules dist",
     "format": "npx prettier --write .",
-    "lint": "eslint 'index.ts' 'rules/**/*.ts' --cache --cache-location ./.eslintcache",
-    "lint:fix": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache",
+    "lint": "eslint 'index.ts' 'rules/**/*.ts' 'infrastructure/scripts/**/*.ts' --cache --cache-location ./.eslintcache",
+    "lint:fix": "eslint 'index.ts' 'rules/**/*.ts' 'infrastructure/scripts/**/*.ts' --fix --cache --cache-location ./.eslintcache",
     "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
     "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
+    "lint:sh": "bash -c 'if command -v shellcheck >/dev/null 2>&1; then shellcheck infrastructure/scripts/*.sh .husky/pre-commit .husky/pre-push .husky/commit-msg; elif [ \"$(uname -s)\" = \"Darwin\" ]; then echo \"⚠️  shellcheck not installed — skipping. Install: brew install shellcheck\"; else echo \"⚠️  shellcheck not installed — skipping. Install: apt-get install shellcheck\"; fi'",
     "lint:workflows": "actionlint",
     "lint:yaml": "yamllint .",
     "prepare": "husky",
@@ -59,6 +60,9 @@
     "release:manual": "pnpm run build && npm publish --access public --provenance=false",
     "release:manual:dry": "pnpm run build && npm publish --access public --provenance=false --dry-run",
     "sort-pkg-json": "sort-package-json",
+    "test": "vitest run",
+    "test:sh": "bash -c 'if command -v bats >/dev/null 2>&1; then bats infrastructure/tests/*.bats; elif [ \"$(uname -s)\" = \"Darwin\" ]; then echo \"⚠️  bats not installed — skipping. Install: brew install bats-core\"; else echo \"⚠️  bats not installed — skipping. Install: apt-get install bats\"; fi'",
+    "test:watch": "vitest",
     "tsc": "tsc --noEmit",
     "version": "changeset version"
   },
@@ -112,7 +116,9 @@
     "markdownlint-cli2": "^0.18.1",
     "rimraf": "^6.0.1",
     "sort-package-json": "^3.6.1",
-    "typescript": "^6.0.3"
+    "tsx": "^4.21.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
   },
   "peerDependencies": {
     "eslint": "^8.57.0 || ^9.0.0",
