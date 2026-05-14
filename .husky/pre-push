@@ -49,5 +49,26 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   fi
 done
 
-printf '\033[0;32m✅ Pre-push checks passed (main branch protection only)\033[0m\n'
+# Workflow + YAML semantic lint. Pre-commit's lint-staged covers staged files,
+# but a developer using --no-verify on commit (or amending without re-staging
+# YAML) can still push broken workflow files. This is the last gate before CI.
+# Best-effort: skip with install hint if the tool isn't on PATH locally — CI
+# (yaml-lint job in ci.yml) still enforces.
+if command -v yamllint >/dev/null 2>&1; then
+  pnpm lint:yaml || exit 1
+elif [ "$(uname -s)" = "Darwin" ]; then
+  printf '⚠️  yamllint not installed — skipping pre-push YAML check. Install: brew install yamllint\n'
+else
+  printf '⚠️  yamllint not installed — skipping pre-push YAML check. Install: pip install --user yamllint==1.37.1\n'
+fi
+
+if command -v actionlint >/dev/null 2>&1; then
+  pnpm lint:workflows || exit 1
+elif [ "$(uname -s)" = "Darwin" ]; then
+  printf '⚠️  actionlint not installed — skipping pre-push workflow check. Install: brew install actionlint\n'
+else
+  printf '⚠️  actionlint not installed — skipping pre-push workflow check. Install: bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/scripts/download-actionlint.bash)\n'
+fi
+
+printf '\033[0;32m✅ Pre-push checks passed\033[0m\n'
 exit 0

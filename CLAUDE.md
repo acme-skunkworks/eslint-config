@@ -75,6 +75,10 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 **Apple Silicon caveat:** arm64 default is fast (native, no emulation) and gives accurate results for this codebase — none of the workflow tooling has arch-specific behaviour. To strictly mirror real `ubuntu-latest` (amd64) for one-off parity debugging, append `--container-architecture linux/amd64` to the command. Expect 3–5× slowdown via Rosetta/QEMU and a multi-minute first-run image pull.
 
+**Post-push triage** (when CI does run remotely, after `/send-it`): `pnpm ci:list` shows recent runs, `pnpm ci:watch` streams the latest one, `pnpm ci:view` opens a specific run. All three require `gh auth login` first.
+
+**Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`.
+
 ## Architecture
 
 The package is a flat-config preset composer. Source is TypeScript; consumers import the compiled `dist/index.js`.
