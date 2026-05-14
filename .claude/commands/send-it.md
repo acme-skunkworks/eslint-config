@@ -74,7 +74,7 @@ This keeps CI's `--frozen-lockfile` install green.
 
 ### Step 3: Commit uncommitted changes
 
-`/send-it` is the all-in-one finisher: you finish coding, run it, and it gets the work into a PR. So whatever's uncommitted at this point should be committed before the changeset work begins — but only what belongs to *this* branch's work.
+`/send-it` is the all-in-one finisher: you finish coding, run it, and it gets the work into a PR. So whatever's uncommitted at this point should be committed before the changeset work begins — but only what belongs to _this_ branch's work.
 
 1. `git status --porcelain`. If clean, skip this step.
 2. Inspect uncommitted files: `git status --porcelain` for the list, `git diff` and `git diff --cached` for hunks.
@@ -125,7 +125,7 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
 
    It prints JSON to stdout: `{ "slug": "...", "bump": "...", "body": "..." }`. The slash command then writes the file.
 
-4. **Skip the changeset step entirely** when the only commits on the branch are non-shippable (changes to `.changeset/`, `.claude/`, `scripts/send-it/`, top-level `README.md`, or a single `chore: update lockfile` commit). For those branches the PR body should note "no changeset (developer-tooling only change)".
+4. **Skip the changeset step entirely** when the only commits on the branch are non-shippable (changes to `.changeset/`, `.claude/`, `.agents/`, `skills-lock.json`, `scripts/send-it/`, top-level `README.md`, or a single `chore: update lockfile` commit). For those branches the PR body should note "no changeset (developer-tooling only change)". The `.agents/` and `skills-lock.json` entries cover skill installs via `npx skills add --copy` (see ASW-168) so skill-only branches don't trip a changeset prompt.
 
 5. **Frontmatter format** (Changesets standard):
 
@@ -183,6 +183,7 @@ git push -u origin <branch>
 ## Related Issues
 
 <!-- Linear identifiers extracted from the branch and commits -->
+
 - ASW-123
 
 ## Test Plan
@@ -195,7 +196,7 @@ Drop the `## Related Issues` section if no issues were found.
 ### Step 10: Transition linked Linear issues to **In Review**
 
 1. Extract Linear issue IDs from the branch name and commit messages: regex `[A-Z]{2,}-\d+` against the upper-cased branch and against commit subjects/bodies. Deduplicate.
-2. Call `mcp__linear-server__list_issue_statuses` with `team: "ACME Skunkworks"` **once** to resolve the live state for `In Review`. Pass the team *name* rather than the key — Linear state IDs are per-team and the workspace's team has been renamed multiple times, so a hardcoded key (CAT → WTF → AKW → ASW) goes stale; the team *name* hasn't moved.
+2. Call `mcp__linear-server__list_issue_statuses` with `team: "ACME Skunkworks"` **once** to resolve the live state for `In Review`. Pass the team _name_ rather than the key — Linear state IDs are per-team and the workspace's team has been renamed multiple times, so a hardcoded key (CAT → WTF → AKW → ASW) goes stale; the team _name_ hasn't moved.
 3. For each ID (regex-only — no extra validation pass; bogus IDs simply error and are skipped with a warning):
    1. Call `mcp__linear-server__get_issue` to read the issue's current state.
    2. If state is `Triage`, `Backlog`, `Todo`, or `In Progress` → call `mcp__linear-server__save_issue` with `state: "In Review"`.
