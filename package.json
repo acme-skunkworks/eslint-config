@@ -38,6 +38,9 @@
     "dist"
   ],
   "scripts": {
+    "act:ci": "act pull_request -W .github/workflows/ci.yml --eventpath .github/act-events/pull_request.json",
+    "act:list": "act --list",
+    "act:release:dry": "act push -W .github/workflows/release.yml",
     "build": "tsc",
     "clean": "rimraf node_modules dist",
     "format": "npx prettier --write .",

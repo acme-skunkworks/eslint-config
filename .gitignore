@@ -16,6 +16,10 @@ coverage/
 .env.local
 .env.*.local
 
+# act reads .secrets by default for secret injection — ignore to prevent
+# accidental commits if anyone later experiments with `act --secret-file`.
+.secrets
+
 .idea/
 .vscode/
 *.swp

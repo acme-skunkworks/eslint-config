@@ -1,0 +1,6 @@
+{
+  "pull_request": {
+    "head": { "ref": "asw-164-act-local-workflow-validation" },
+    "base": { "ref": "main" }
+  }
+}
