@@ -125,7 +125,7 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
 
    It prints JSON to stdout: `{ "slug": "...", "bump": "...", "body": "..." }`. Unit tests live alongside (`pnpm test infrastructure/tests/derive-changeset.test.ts`). The slash command then writes the file.
 
-4. **Skip the changeset step entirely** when the only commits on the branch are non-shippable (changes to `.changeset/`, `.claude/`, `infrastructure/`, top-level `README.md`, or a single `chore: update lockfile` commit). For those branches the PR body should note "no changeset (developer-tooling only change)".
+4. **Skip the changeset step entirely** when the only commits on the branch are non-shippable (changes to `.changeset/`, `.claude/`, `.agents/`, `infrastructure/`, `skills-lock.json`, top-level `README.md`, or a single `chore: update lockfile` commit). For those branches the PR body should note "no changeset (developer-tooling only change)". The `.agents/` and `skills-lock.json` entries cover skill installs via `npx skills add --copy` (see ASW-168) so skill-only branches don't trip a changeset prompt.
 
 5. **Frontmatter format** (Changesets standard):
 
