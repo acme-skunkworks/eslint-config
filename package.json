@@ -44,7 +44,7 @@
     "build": "tsc",
     "ci:list": "gh run list --limit 10",
     "ci:view": "gh run view",
-    "ci:watch": "gh run watch $(gh run list -L 1 --json databaseId -q '.[0].databaseId')",
+    "ci:watch": "gh run watch $(gh run list -L 1 --json databaseId -q '.[0].databaseId // empty')",
     "clean": "rimraf node_modules dist",
     "format": "npx prettier --write .",
     "lint": "eslint 'index.ts' 'rules/**/*.ts' --cache --cache-location ./.eslintcache",
