@@ -46,6 +46,39 @@ Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-l
 
 Enforcement: pre-commit is best-effort (skip with install hint when missing); CI is the `yaml-lint` job in `ci.yml`, parallel to `build-and-lint`, always enforced.
 
+## Validating workflows locally with `act`
+
+`actionlint` and `yamllint` catch schema and expression-level mistakes. They say nothing about whether a workflow actually _works_ end-to-end — Node/pnpm setup ordering, env propagation, conditional skips, step interdependencies. [`act`](https://github.com/nektos/act) closes that gap by running the workflow against your local Docker daemon so you can iterate without push-and-pray.
+
+**Install:** `brew install act` (macOS) or `bash <(curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh)` (Linux). Requires a running container engine — Docker Desktop, Colima, or podman. `pnpm act:list` is the smoke test: if it enumerates the jobs in `.github/workflows/`, you're set up.
+
+**`.actrc`** at the repo root pins `ubuntu-latest` to `catthehacker/ubuntu:act-latest` (Ubuntu 24.04-based, matching real `ubuntu-latest`). The default `act` image is intentionally minimal and silently breaks Node/pnpm setups, so don't remove this. Container architecture is deliberately **not** pinned — `act` defaults to the host arch (arm64 on Apple Silicon), which is fast and matches GHA's _results_ for this codebase even though GHA runners are amd64.
+
+**Capability matrix** for this repo's workflows (validated by running `act` on this branch):
+
+| Workflow / Job                          | Under `act` | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ci.yml` → `build-and-lint`             | ✅ full     | Checkout → pnpm → Node 22 → install → build → lint all green. The `📝 Changeset status` step inside this job is `continue-on-error: true` and will "fail" locally whenever the working branch has changes vs `main` but no changeset yet — that's expected pre-`/send-it` noise.                                                                                                                                                                                                                                   |
+| `ci.yml` → `yaml-lint`                  | ✅ full     | yamllint pip install + actionlint curl-bash both work inside the container. **Required two workflow tweaks** to be portable to `act`'s catthehacker image: `pip install --user --break-system-packages` (Ubuntu 24.04 / Python 3.12 enforces PEP 668; flag is a no-op on real GHA) and `export PATH="$HOME/.local/bin:$PATH"` within the same step (catthehacker runs as root, so `~/.local/bin` isn't pre-added to PATH like it is on the real runner).                                                           |
+| `release.yml` → `release`               | ⚠️ partial  | Checkout → pnpm → Node → `pnpm add -g npm@latest` → install → build all succeed. Fails at `🚀 Version or Publish (npm)` inside `pnpm changeset publish` with `EUSAGE: Provenance generation in GitHub Actions requires "write" access to the "id-token" permission` — npm refuses because `publishConfig.provenance: true` needs a real `ACTIONS_ID_TOKEN_REQUEST_URL` and there isn't one locally. This is the documented gap. The `pnpm add -g npm@latest` step, contrary to early worry, runs cleanly on arm64. |
+| `claude-code-review.yml` / `claude.yml` | ⏭️ skip     | Need `CLAUDE_CODE_OAUTH_TOKEN`. The `act:*` scripts use `-W` to scope to specific workflows, so these aren't loaded by default.                                                                                                                                                                                                                                                                                                                                                                                    |
+
+**Commands:**
+
+```bash
+pnpm act:list           # smoke test — enumerate every job in .github/workflows/
+pnpm act:ci             # run ci.yml as a PR event, using .github/act-events/pull_request.json
+pnpm act:release:dry    # run release.yml — runs everything up to the npm publish, then stops at the OIDC-bound provenance check
+```
+
+The PR event fixture lives at `.github/act-events/pull_request.json` and sets `pull_request.head.ref` / `pull_request.base.ref` so `pnpm changeset status --since=origin/${{ github.base_ref }}` in `ci.yml` resolves to a real ref instead of `origin/`.
+
+**Apple Silicon caveat:** arm64 default is fast (native, no emulation) and gives accurate results for this codebase — none of the workflow tooling has arch-specific behaviour. To strictly mirror real `ubuntu-latest` (amd64) for one-off parity debugging, append `--container-architecture linux/amd64` to the command. Expect 3–5× slowdown via Rosetta/QEMU and a multi-minute first-run image pull.
+
+**Post-push triage** (when CI does run remotely, after `/send-it`): `pnpm ci:list` shows recent runs, `pnpm ci:watch` streams the latest one, `pnpm ci:view` opens a specific run. All three require `gh auth login` first.
+
+**Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`.
+
 ## Architecture
 
 The package is a flat-config preset composer. Source is TypeScript; consumers import the compiled `dist/index.js`.
