@@ -21,15 +21,17 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
+    "types": ["node"],
     "tsBuildInfoFile": ".tsbuildinfo",
     "useDefineForClassFields": true
   },
-  "include": ["index.ts", "rules/**/*.ts"],
+  "include": ["index.ts", "rules/**/*.ts", "infrastructure/scripts/**/*.ts"],
   "exclude": [
     "dist",
     "node_modules",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "eslint.config.ts"
+    "eslint.config.ts",
+    "vitest.config.ts"
   ]
 }

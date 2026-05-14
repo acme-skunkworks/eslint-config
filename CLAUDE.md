@@ -12,11 +12,15 @@ Standalone home for `@acme-skunkworks/eslint-config` (extracted from `RobEasthop
 pnpm install        # install deps
 pnpm run build      # tsc → dist/ (the published artifact; consumers import from dist)
 pnpm tsc            # type-check only (no emit)
-pnpm lint           # lint this package's own source (index.ts + rules/**)
+pnpm lint           # lint this package's own source (index.ts + rules/** + infrastructure/**)
 pnpm lint:fix       # auto-fix
 pnpm lint:md        # markdownlint
 pnpm lint:yaml      # yamllint . (semantic YAML check; warnings non-blocking)
 pnpm lint:workflows # actionlint on .github/workflows/
+pnpm lint:sh        # shellcheck on infrastructure/scripts/*.sh + .husky/*
+pnpm test           # vitest run (infrastructure/tests/**/*.test.ts)
+pnpm test:watch     # vitest in watch mode
+pnpm test:sh        # bats on infrastructure/tests/*.bats
 pnpm format         # prettier write
 pnpm changeset      # interactive changeset (or write .changeset/<slug>.md by hand)
 ```
@@ -44,7 +48,7 @@ Two non-Node tools augment Prettier's formatting pass with the semantic checks P
 
 Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-length / indentation to warnings (Prettier owns formatting), allows the GitHub Actions truthy values (`on`, `off`, `yes`, `no`), and ignores `node_modules/`, `dist/`, `.turbo/`, `pnpm-lock.yaml`. No `.actionlintrc.yaml` — defaults are fine for this repo.
 
-Enforcement: pre-commit is best-effort (skip with install hint when missing); CI is the `yaml-lint` job in `ci.yml`, parallel to `build-and-lint`, always enforced.
+Enforcement: pre-commit is best-effort (skip with install hint when missing); CI is the `yaml-lint` job in `ci.yml`, parallel to `build-and-lint`, always enforced. The install-and-run logic for both tools lives in `infrastructure/scripts/ensure-yamllint.sh` and `ensure-actionlint.sh`; the workflow calls those as one-liners (see `infrastructure/README.md`). Cache steps (`actions/cache@v4`) stay inline in `ci.yml` because caching is a workflow concern.
 
 ## Validating workflows locally with `act`
 
@@ -78,6 +82,29 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 **Post-push triage** (when CI does run remotely, after `/send-it`): `pnpm ci:list` shows recent runs, `pnpm ci:watch` streams the latest one, `pnpm ci:view` opens a specific run. All three require `gh auth login` first.
 
 **Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`.
+
+## `infrastructure/`
+
+`act` validates workflow _wiring_ — that the YAML resolves, steps fire in order, env propagates. It says nothing about whether the logic _inside_ a `run:` block is correct. `infrastructure/` is the home for that logic: shell + TS extracted from workflow `run:` blocks, runnable and unit-tested in isolation. The full conventions document is `infrastructure/README.md`; the high-level rules:
+
+- **Per-script language.** Shell + bats for CLI orchestration (`git`, `gh`, `jq`, `curl`, `pip`). TypeScript + vitest for parsing, branching, anything touching octokit. If a shell script grows past ~20 lines with conditionals, port to TS.
+- **Inputs via env, not argv.** Workflows pass values through `env:`; tests mock by passing an env object. No shell quoting drama; clean test seam.
+- **Pure functions exported for tests.** Each TS script exports the pure logic; `main()` wires it to real subprocesses. Tests inject a fake runner that records argv.
+- **Idempotent.** Re-running with the same inputs is safe. The CI cache-hit branch of `ensure-yamllint.sh` / `ensure-actionlint.sh` is exactly this scenario.
+- **Pinned versions in env defaults**, e.g. `ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.5}"`. The workflow's cache-key still hard-codes the version separately — match them when bumping.
+
+Today's scripts:
+
+| File                            | Replaces                   | Tests                                                               |
+| ------------------------------- | -------------------------- | ------------------------------------------------------------------- |
+| `scripts/retitle-release-pr.ts` | `release.yml` retitle step | `tests/retitle-release-pr.test.ts` (vitest, fake runner)            |
+| `scripts/ensure-yamllint.sh`    | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches) |
+| `scripts/ensure-actionlint.sh`  | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)    |
+| `scripts/derive-changeset.ts`   | (used by `/send-it`)       | `tests/derive-changeset.test.ts` (12 cases — slug, bump, body)      |
+
+CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
+
+When adding a new script, write the test first, then wire from YAML as a one-liner: `run: pnpm tsx infrastructure/scripts/<name>.ts` or `run: bash infrastructure/scripts/<name>.sh`.
 
 ## Architecture
 
