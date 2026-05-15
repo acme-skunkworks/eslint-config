@@ -47,6 +47,15 @@ jobs:
       - name: 🏗️ Build
         run: pnpm run build
 
+      - name: 🔍 Debug auth environment
+        # Confirms npm CLI version and that the OIDC issuer URL is exported
+        # before publish. If this run also 404s, the log distinguishes
+        # "OIDC exchange never happened" from "exchange succeeded, PUT failed".
+        # No secrets logged — only the boolean presence of the issuer URL.
+        run: |
+          npm --version
+          node -e "console.log('OIDC available:', !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL)"
+
       - name: 🚀 Raw npm publish (OIDC)
         run: npm publish --access public --provenance
         env:
