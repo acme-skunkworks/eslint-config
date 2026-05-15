@@ -11,6 +11,7 @@ infrastructure/
     ensure-yamllint.sh              # extracted from .github/workflows/ci.yml
     ensure-actionlint.sh            # extracted from .github/workflows/ci.yml
     derive-changeset.ts             # used by /send-it (.claude/commands/send-it.md)
+    publish-via-raw-npm.sh          # release.yml publish step (bypasses pnpm)
   tests/
     *.test.ts                       # vitest, run via `pnpm test`
     *.bats                          # bats-core, run via `pnpm test:sh`
