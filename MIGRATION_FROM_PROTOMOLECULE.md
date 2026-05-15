@@ -11,7 +11,7 @@ This repo is the new home for the ESLint configuration previously shipped from `
 - **Final published version under the old name:** `@robeasthope/eslint-config@6.2.1`
 - **Port date:** 2026-04-30
 
-The full pre-port audit lives on Linear issue [ASW-54](https://linear.app/goose-and-hobbes/issue/ASW-54).
+The full pre-port audit lives on Linear issue [ASW-54](https://linear.app/acme-skunkworks/issue/ASW-54).
 
 ## What changed in the port
 
