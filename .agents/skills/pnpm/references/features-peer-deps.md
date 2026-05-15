@@ -29,7 +29,6 @@ strict-peer-dependencies=true
 
 When strict, pnpm will fail if:
 
-
 - Peer dependency is missing
 - Installed version doesn't match required range
 
