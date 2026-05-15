@@ -123,9 +123,20 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
    pnpm tsx infrastructure/send-it/derive-changeset.ts
    ```
 
-   It prints JSON to stdout: `{ "slug": "...", "bump": "...", "body": "..." }`. Unit tests live under `infrastructure/tests/derive-changeset.test.ts`. The slash command then writes the file.
+   It prints JSON to stdout: `{ "slug": "...", "bump": "...", "body": "..." }`. Unit tests live alongside (`pnpm test infrastructure/tests/derive-changeset.test.ts`). The slash command then writes the file.
 
-4. **Skip the changeset step entirely** when the only commits on the branch are non-shippable (changes to `.changeset/`, `.claude/`, `infrastructure/send-it/`, top-level `README.md`, or a single `chore: update lockfile` commit). For those branches the PR body should note "no changeset (developer-tooling only change)".
+4. **Decide whether a changeset is required.** A changeset is required **only** if the branch diff touches any of:
+   - `index.ts`
+   - any file under `rules/`
+   - `package.json`, **and** the diff modifies any of these keys: `name`, `version`, `main`, `module`, `exports`, `types`, `dependencies`, `peerDependencies`, `peerDependenciesMeta`, `files`, `publishConfig`
+
+   These are the only paths whose changes reach consumers. `files: ["dist"]` in `package.json` plus npm's auto-bundling of `README.md` / `LICENSE` / `package.json` defines the shippable surface, and everything inside `dist/` is compiled from `index.ts` and `rules/**`. Verify with `git diff --name-only origin/main...HEAD`; for `package.json`, also run `git diff origin/main...HEAD -- package.json` and check whether any of the listed keys appear in the hunks.
+
+   Otherwise — including pure docs (`README.md`, `MIGRATION_FROM_PROTOMOLECULE.md`), CI / infra (`.github/`, `.husky/`, `infrastructure/` (including `infrastructure/scripts/`, `infrastructure/send-it/`, `infrastructure/tests/`), `.actrc`, `.yamllint.yml`, `.npmrc`, `.editorconfig`, top-level `eslint.config.ts`, `tsconfig.json`, `vitest.config.ts`), agent tooling (`.claude/`, `.agents/`, `skills-lock.json`, `.changeset/`), or a single `chore: update lockfile` commit — **skip the changeset step entirely**. Do **not** create a `.changeset/*.md` file. **Not even one with empty frontmatter.**
+
+   > ⚠️ **Why empty changesets are toxic.** An empty `.changeset/*.md` (frontmatter `---\n---`, no package bumps) is not a no-op. `changesets/action` reads it as "there are pending changesets," refuses to open a Version Packages PR (no bumps to apply), and refuses to fall through to the "publish unpublished packages" path. The workflow logs `All changesets are empty; not creating PR` and exits clean while the next release silently stalls. This jammed v1.0.1 between May 8 and May 14, 2026 — see PR #16 / ASW-170. **An empty changeset is strictly worse than no file.**
+
+   When skipped, the PR body should note `no changeset (developer-tooling only change)` so reviewers can confirm the skip was intentional.
 
 5. **Frontmatter format** (Changesets standard):
 
@@ -145,11 +156,11 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
 
 ### Step 6: Validate locally
 
-> **Skipped if Step 5 was skipped** (either by the Changesets-not-installed gate at the top of Step 5, or by the developer-tooling skip rule in Step 5.4).
+> **Skipped if Step 5 was skipped** (either by the Changesets-not-installed gate at the top of Step 5, or by the non-shippable-paths allowlist in Step 5.4).
 
 Run `pnpm changeset status`. If it fails (no changesets when one is expected, or the file is malformed), surface the error and abort. Don't auto-fix; the user resolves.
 
-If Step 5 was skipped specifically because the branch is developer-tooling-only (Step 5.4), `pnpm changeset status` may report "no changesets" — that's expected. The release-pipeline policy on whether unchangesetted PRs are allowed is governed by CI's `changesets/action` config, not by `/send-it`.
+If Step 5 was skipped because the branch is non-shippable per the Step 5.4 allowlist, `pnpm changeset status` may report "no changesets" — that's expected. The release-pipeline policy on whether unchangesetted PRs are allowed is governed by CI's `changesets/action` config, not by `/send-it`.
 
 ### Step 7: Commit the changeset
 
@@ -230,7 +241,7 @@ $ARGUMENTS
 2. Refresh lockfile if `package.json` drifted.
 3. Commit any uncommitted changes as logical atomic commits.
 4. Fetch `origin/main`; confirm commits ahead.
-5. Author or update `.changeset/<slug>.md` (slug from branch; bump from commits). **Gated** on `pnpm changeset --version` succeeding — skipped until ASW-70 installs Changesets.
+5. Author or update `.changeset/<slug>.md` (slug from branch; bump from commits). **Gated** on `pnpm changeset --version` succeeding (skipped until ASW-70 installs Changesets — see gate at Step 5). Also skipped when the branch diff doesn't touch any shippable path (Step 5.4 allowlist) — in that case **no `.changeset/*.md` is written at all**, not even an empty one.
 6. `pnpm changeset status`. Skipped if Step 5 was skipped.
 7. Commit `docs(changeset): <title>`.
 8. Push branch.
