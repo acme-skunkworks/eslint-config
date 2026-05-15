@@ -24,7 +24,12 @@ function makeRunner(handlers: Record<string, () => string>): {
   const run: Runner = (cmd, args) => {
     calls.push({ cmd, args });
     const key = `${cmd} ${args.join(" ")}`;
-    for (const prefix of Object.keys(handlers)) {
+    // Sort by length descending so the most specific prefix wins. Guards
+    // against silent shadowing if a future test registers a shorter
+    // catch-all prefix before a longer specific one. ASW-169.
+    for (const prefix of Object.keys(handlers).sort(
+      (a, b) => b.length - a.length,
+    )) {
       if (key.startsWith(prefix)) return handlers[prefix]();
     }
     return "";
