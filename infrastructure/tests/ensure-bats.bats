@@ -93,3 +93,44 @@ INSTALL
   [ "$status" -ne 0 ]
   grep -q "bats-core/archive/refs/tags/v1.99.0.tar.gz" "$CALLS_LOG"
 }
+
+@test "cache-hit: bats restored to \$HOME/.local/bin (off-PATH) is discovered" {
+  # Simulates GHA cache-restore: bats only exists under ~/.local/bin, which
+  # is NOT pre-added to PATH. The script must prepend it BEFORE the version
+  # check so command -v finds the cached binary instead of treating the run
+  # as a cache miss and re-downloading.
+  mkdir -p "$HOME/.local/bin"
+  cat > "$HOME/.local/bin/bats" <<'BATS'
+#!/usr/bin/env bash
+echo "Bats 1.13.0"
+BATS
+  chmod +x "$HOME/.local/bin/bats"
+  write_fake curl "echo 'curl should not have been called' >&2; exit 1"
+
+  run bash "$SCRIPT_DIR/ensure-bats.sh"
+  [ "$status" -eq 0 ]
+  ! grep -q "^curl" "$CALLS_LOG"
+}
+
+@test "substring-safe: a version that contains BATS_VERSION as substring is not accepted" {
+  # `1.13.0` is a substring of `11.13.0`; the version check must use
+  # whole-line matching so the substring case still triggers reinstall.
+  write_fake bats "echo 'Bats 11.13.0'"
+  write_fake curl "exit 1"
+
+  run bash "$SCRIPT_DIR/ensure-bats.sh"
+  [ "$status" -ne 0 ]
+  grep -q "^curl -fsSL https://github.com/bats-core/bats-core/archive/refs/tags/v1.13.0.tar.gz" "$CALLS_LOG"
+}
+
+@test "appends \$HOME/.local/bin to GITHUB_PATH even on cache hit" {
+  # GHA pipeline must propagate ~/.local/bin to subsequent steps regardless
+  # of whether this run installed or used a cached binary.
+  write_fake bats "echo 'Bats 1.13.0'"
+  export GITHUB_PATH="${BATS_TEST_TMPDIR}/github_path"
+  : > "$GITHUB_PATH"
+
+  run bash "$SCRIPT_DIR/ensure-bats.sh"
+  [ "$status" -eq 0 ]
+  grep -qF "$HOME/.local/bin" "$GITHUB_PATH"
+}

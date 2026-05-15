@@ -95,13 +95,13 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 Today's scripts:
 
-| File                            | Replaces                   | Tests                                                                |
-| ------------------------------- | -------------------------- | -------------------------------------------------------------------- |
-| `scripts/retitle-release-pr.ts` | `release.yml` retitle step | `tests/retitle-release-pr.test.ts` (vitest, fake runner)             |
-| `scripts/ensure-yamllint.sh`    | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches)  |
-| `scripts/ensure-actionlint.sh`  | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)     |
-| `scripts/ensure-bats.sh`        | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache-hit / cache-miss / version override) |
-| `scripts/derive-changeset.ts`   | (used by `/send-it`)       | `tests/derive-changeset.test.ts` (13 cases — slug, bump, body)       |
+| File                            | Replaces                   | Tests                                                                                                                 |
+| ------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `scripts/retitle-release-pr.ts` | `release.yml` retitle step | `tests/retitle-release-pr.test.ts` (vitest, fake runner)                                                              |
+| `scripts/ensure-yamllint.sh`    | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
+| `scripts/ensure-actionlint.sh`  | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
+| `scripts/ensure-bats.sh`        | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
+| `scripts/derive-changeset.ts`   | (used by `/send-it`)       | `tests/derive-changeset.test.ts` (13 cases — slug, bump, body)                                                        |
 
 CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
 

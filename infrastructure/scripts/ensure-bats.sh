@@ -18,11 +18,20 @@ set -euo pipefail
 
 BATS_VERSION="${BATS_VERSION:-1.13.0}"
 
+# Prepend $HOME/.local/bin BEFORE the version check so a cache-restored bats
+# (under ~/.local/bin from a previous run) is discoverable to `command -v`.
+# Otherwise needs_install treats every run as a cache miss and re-downloads.
+export PATH="$HOME/.local/bin:$PATH"
+if [ -n "${GITHUB_PATH:-}" ]; then
+  echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+fi
+
 needs_install() {
   if ! command -v bats >/dev/null 2>&1; then
     return 0
   fi
-  if ! bats --version 2>/dev/null | grep -q "${BATS_VERSION}"; then
+  # `grep -Fqx "Bats X.Y.Z"` so e.g. `1.13.0` doesn't substring-match `11.13.0`.
+  if ! bats --version 2>/dev/null | grep -Fqx "Bats ${BATS_VERSION}"; then
     return 0
   fi
   return 1
@@ -36,11 +45,6 @@ if needs_install; then
   curl -fsSL "$TARBALL_URL" -o "$TMP/bats.tar.gz"
   tar -xzf "$TMP/bats.tar.gz" -C "$TMP"
   "$TMP/bats-core-${BATS_VERSION}/install.sh" "$HOME/.local"
-
-  if [ -n "${GITHUB_PATH:-}" ]; then
-    echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-  fi
-  export PATH="$HOME/.local/bin:$PATH"
 fi
 
 bats --version
