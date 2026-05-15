@@ -54,6 +54,18 @@ describe("deriveBump", () => {
     ).toBe("minor");
   });
 
+  it("is patch when the first commit is a fix even if a later commit is a feat", () => {
+    // Documents an intentional asymmetry in deriveBump: only commits[0] is
+    // checked for `feat:`, while breaking-change detection scans all commits.
+    // The /send-it heuristic treats the lead commit as the release intent.
+    expect(
+      deriveBump([
+        { subject: "fix: stabilise", body: "" },
+        { subject: "feat: new export", body: "" },
+      ]),
+    ).toBe("patch");
+  });
+
   it("is minor on a scoped feat", () => {
     expect(deriveBump([{ subject: "feat(react): add hook", body: "" }])).toBe(
       "minor",

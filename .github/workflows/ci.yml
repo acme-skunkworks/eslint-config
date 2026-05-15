@@ -107,8 +107,24 @@ jobs:
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🐚 Install shell tooling (bats, shellcheck)
-        run: sudo apt-get update && sudo apt-get install -y bats shellcheck
+      - name: 📦 Cache bats binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: ${{ runner.os }}-bats-1.13.0
+          restore-keys: |
+            ${{ runner.os }}-bats-
+
+      - name: 🐚 Install shellcheck (apt)
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          shellcheck --version | head -2
+
+      - name: 🐚 Install bats (pinned)
+        # Logic lives in infrastructure/scripts/ensure-bats.sh — bootstraps
+        # bats-core from GitHub releases at the pinned version. Tested via
+        # bats; see infrastructure/tests/ensure-bats.bats.
+        run: bash infrastructure/scripts/ensure-bats.sh
 
       - name: 🔬 Shellcheck
         run: pnpm lint:sh

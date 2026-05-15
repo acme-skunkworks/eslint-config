@@ -10,6 +10,7 @@ infrastructure/
     retitle-release-pr.ts           # extracted from .github/workflows/release.yml
     ensure-yamllint.sh              # extracted from .github/workflows/ci.yml
     ensure-actionlint.sh            # extracted from .github/workflows/ci.yml
+    ensure-bats.sh                  # extracted from .github/workflows/ci.yml
     derive-changeset.ts             # used by /send-it (.claude/commands/send-it.md)
     publish-via-raw-npm.sh          # release.yml publish step (bypasses pnpm)
   tests/
