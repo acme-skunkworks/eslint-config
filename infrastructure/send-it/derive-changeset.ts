@@ -1,5 +1,8 @@
 #!/usr/bin/env -S npx tsx
-// Derives the deterministic bits of a /send-it changeset entry:
+// Derives the deterministic bits of a /send-it changeset entry.
+// Run: pnpm tsx infrastructure/send-it/derive-changeset.ts
+//
+// Fields:
 //   slug : branch-name-derived filename for `.changeset/<slug>.md`
 //   bump : major | minor | patch (per /send-it's bump heuristic)
 //   body : a one-line draft summary (the slash command may rewrite this)

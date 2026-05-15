@@ -4,7 +4,7 @@ import {
   deriveBody,
   deriveBump,
   deriveSlug,
-} from "../scripts/derive-changeset.js";
+} from "../send-it/derive-changeset.js";
 
 describe("deriveSlug", () => {
   it("truncates over the 60-char ceiling at a word boundary when possible", () => {
