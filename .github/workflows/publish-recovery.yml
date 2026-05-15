@@ -48,13 +48,23 @@ jobs:
         run: pnpm run build
 
       - name: 🔍 Debug auth environment
-        # Confirms npm CLI version and that the OIDC issuer URL is exported
-        # before publish. If this run also 404s, the log distinguishes
-        # "OIDC exchange never happened" from "exchange succeeded, PUT failed".
+        # Confirms which npm binary actually runs (on-PATH vs. the upgraded
+        # one at $PNPM_HOME/npm) and that the OIDC issuer URL is exported.
+        # The on-PATH line documents the bug ASW-174 works around — when both
+        # versions match, the underlying PATH-shadowing has been resolved.
         # No secrets logged — only the boolean presence of the issuer URL.
         run: |
-          npm --version
+          echo "on-PATH npm:    $(npm --version)"
+          echo "PNPM_HOME npm:  $("$PNPM_HOME/npm" --version)"
+          echo "PNPM_HOME path: $PNPM_HOME"
+          ls -la "$PNPM_HOME/npm" || echo "WARNING: $PNPM_HOME/npm not found"
           node -e "console.log('OIDC available:', !!process.env.ACTIONS_ID_TOKEN_REQUEST_URL)"
 
       - name: 🚀 Raw npm publish (OIDC)
-        run: npm publish --access public --provenance
+        # Absolute path bypasses PATH-shadowing — actions/setup-node prepends
+        # its tool-cache bin (npm 10.9.7) to PATH, so plain `npm publish` runs
+        # the bundled version even after `pnpm add -g npm@latest`. npm Trusted
+        # Publishing requires ≥11.5.1; the upgraded npm lives at $PNPM_HOME/npm.
+        # See ASW-173 / ASW-174 for the diagnostic.
+        run: |
+          "$PNPM_HOME/npm" publish --access public --provenance
