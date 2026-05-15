@@ -1,0 +1,52 @@
+name: Publish recovery (diagnostic)
+
+# Manual-only — bypasses changesets/action to test whether raw npm publish
+# succeeds via OIDC where the wrapped invocation fails. See ASW-173.
+# Delete this file once the diagnostic question is answered.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publish-recovery
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: 🩹 Raw npm publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # OIDC for npm Trusted Publishing + provenance
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: 🟢 Setup Node.js (npm registry)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: ⬆️ Upgrade npm for Trusted Publishing
+        run: pnpm add -g npm@latest
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+
+      - name: 🏗️ Build
+        run: pnpm run build
+
+      - name: 🚀 Raw npm publish (OIDC)
+        run: npm publish --access public --provenance
+        env:
+          HUSKY: 0
