@@ -76,6 +76,12 @@ jobs:
           echo "PNPM_HOME npm:      $("$PNPM_HOME/npm" --version)"
           echo "command -v npm:     $(command -v npm)"
           ls -la "$(which npm)" || true
+          # Node module resolution probe — tests whether changesets/action /
+          # @changesets/cli could be picking up an npm via require.resolve()
+          # rather than PATH lookup. Tries the bare specifier and the
+          # package.json form because the bare form fails when npm has no
+          # "main" field.
+          node -e "['npm','npm/package.json'].forEach(t=>{try{console.log('require.resolve('+JSON.stringify(t)+'):'.padEnd(40)+require.resolve(t))}catch(e){console.log('require.resolve('+JSON.stringify(t)+'):'.padEnd(40)+'NOT RESOLVABLE ('+e.code+')')}})" || true
 
       - name: 🚀 Version or Publish (npm)
         id: changesets
