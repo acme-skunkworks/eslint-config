@@ -11,7 +11,6 @@ Vitest is a next-generation testing framework powered by Vite. It provides a Jes
 
 **Key Features:**
 
-
 - Vite-native: Uses Vite's transformation pipeline for fast HMR-like test updates
 - Jest-compatible: Drop-in replacement for most Jest test suites
 - Smart watch mode: Only reruns affected tests based on module graph
