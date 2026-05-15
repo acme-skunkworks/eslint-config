@@ -102,7 +102,7 @@ If `git log origin/main..HEAD` is empty, exit with: "No commits ahead of `main`.
 
 ### Step 5: Author or update the changeset
 
-> **Gated on Changesets being installed.** Run `pnpm changeset --version`. If the command fails (Changesets not wired up in this repo), skip Steps 5 and 6 entirely, print `/send-it: Changesets not installed — skipping changeset step.`, and continue at Step 7.
+> **Gated on Changesets being installed.** Run `pnpm changeset --version`. If the command fails (Changesets not yet wired up in this repo — tracked in **ASW-70**), skip Steps 5 and 6 entirely, print `/send-it: Changesets not installed yet — skipping changeset step. Tracked in ASW-70.`, and continue at Step 7. The gate auto-opens when ASW-70 lands `@changesets/cli`; no further spec edit is needed at that point.
 
 Versioning lives in [Changesets](https://github.com/changesets/changesets). `/send-it` writes a single `.changeset/<slug>.md` per branch describing the user-facing change and the bump level. The release pipeline (`changesets/action` on `main`) reads these files, bumps versions, writes `CHANGELOG.md`, and tags the release — `/send-it` does **not** do any of that.
 
@@ -117,10 +117,10 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
    - First commit's subject starts with `feat:` or `feat(<scope>):` → **minor**.
    - Otherwise → **patch**.
 
-   The deterministic bits live in `infrastructure/scripts/derive-changeset.ts` — invoke it to get the slug, bump level, and a draft body:
+   The deterministic bits live in `infrastructure/send-it/derive-changeset.ts` — invoke it to get the slug, bump level, and a draft body:
 
    ```bash
-   pnpm tsx infrastructure/scripts/derive-changeset.ts
+   pnpm tsx infrastructure/send-it/derive-changeset.ts
    ```
 
    It prints JSON to stdout: `{ "slug": "...", "bump": "...", "body": "..." }`. Unit tests live alongside (`pnpm test infrastructure/tests/derive-changeset.test.ts`). The slash command then writes the file.
@@ -132,7 +132,7 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
 
    These are the only paths whose changes reach consumers. `files: ["dist"]` in `package.json` plus npm's auto-bundling of `README.md` / `LICENSE` / `package.json` defines the shippable surface, and everything inside `dist/` is compiled from `index.ts` and `rules/**`. Verify with `git diff --name-only origin/main...HEAD`; for `package.json`, also run `git diff origin/main...HEAD -- package.json` and check whether any of the listed keys appear in the hunks.
 
-   Otherwise — including pure docs (`README.md`, `MIGRATION_FROM_PROTOMOLECULE.md`), CI / infra (`.github/`, `.husky/`, `infrastructure/`, `.actrc`, `.yamllint.yml`, `.npmrc`, `.editorconfig`, top-level `eslint.config.ts`, `tsconfig.json`, `vitest.config.ts`), agent tooling (`.claude/`, `.agents/`, `skills-lock.json`, `.changeset/`), or a single `chore: update lockfile` commit — **skip the changeset step entirely**. Do **not** create a `.changeset/*.md` file. **Not even one with empty frontmatter.**
+   Otherwise — including pure docs (`README.md`, `MIGRATION_FROM_PROTOMOLECULE.md`), CI / infra (`.github/`, `.husky/`, `infrastructure/` (including `infrastructure/scripts/`, `infrastructure/send-it/`, `infrastructure/tests/`), `.actrc`, `.yamllint.yml`, `.npmrc`, `.editorconfig`, top-level `eslint.config.ts`, `tsconfig.json`, `vitest.config.ts`), agent tooling (`.claude/`, `.agents/`, `skills-lock.json`, `.changeset/`), or a single `chore: update lockfile` commit — **skip the changeset step entirely**. Do **not** create a `.changeset/*.md` file. **Not even one with empty frontmatter.**
 
    > ⚠️ **Why empty changesets are toxic.** An empty `.changeset/*.md` (frontmatter `---\n---`, no package bumps) is not a no-op. `changesets/action` reads it as "there are pending changesets," refuses to open a Version Packages PR (no bumps to apply), and refuses to fall through to the "publish unpublished packages" path. The workflow logs `All changesets are empty; not creating PR` and exits clean while the next release silently stalls. This jammed v1.0.1 between May 8 and May 14, 2026 — see PR #16 / ASW-170. **An empty changeset is strictly worse than no file.**
 
@@ -241,7 +241,7 @@ $ARGUMENTS
 2. Refresh lockfile if `package.json` drifted.
 3. Commit any uncommitted changes as logical atomic commits.
 4. Fetch `origin/main`; confirm commits ahead.
-5. Author or update `.changeset/<slug>.md` (slug from branch; bump from commits). **Gated** on `pnpm changeset --version` succeeding. Also skipped when the branch diff doesn't touch any shippable path (Step 5.4 allowlist) — in that case **no `.changeset/*.md` is written at all**, not even an empty one.
+5. Author or update `.changeset/<slug>.md` (slug from branch; bump from commits). **Gated** on `pnpm changeset --version` succeeding (skipped until ASW-70 installs Changesets — see gate at Step 5). Also skipped when the branch diff doesn't touch any shippable path (Step 5.4 allowlist) — in that case **no `.changeset/*.md` is written at all**, not even an empty one.
 6. `pnpm changeset status`. Skipped if Step 5 was skipped.
 7. Commit `docs(changeset): <title>`.
 8. Push branch.
