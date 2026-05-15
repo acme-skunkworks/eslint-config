@@ -61,33 +61,15 @@ jobs:
       - name: 🏗️ Build
         run: pnpm run build
 
-      - name: 🔍 Debug npm resolution (pre-publish)
-        # Diagnostic for ASW-174: confirms which npm changesets/action will
-        # actually invoke. PR #20 added $PNPM_HOME to $GITHUB_PATH but the
-        # publish error message still matched npm 10.x format, suggesting
-        # changesets/action / @changesets/cli resolves npm via something
-        # other than PATH. This step makes the resolution explicit. Delete
-        # once the question is settled.
-        run: |
-          echo "PATH:               $PATH"
-          echo "which npm:          $(which npm)"
-          echo "npm --version:      $(npm --version)"
-          echo "PNPM_HOME:          $PNPM_HOME"
-          echo "PNPM_HOME npm:      $("$PNPM_HOME/npm" --version)"
-          echo "command -v npm:     $(command -v npm)"
-          ls -la "$(which npm)" || true
-          # Node module resolution probe — tests whether changesets/action /
-          # @changesets/cli could be picking up an npm via require.resolve()
-          # rather than PATH lookup. Tries the bare specifier and the
-          # package.json form because the bare form fails when npm has no
-          # "main" field.
-          node -e "['npm','npm/package.json'].forEach(t=>{try{console.log('require.resolve('+JSON.stringify(t)+'):'.padEnd(40)+require.resolve(t))}catch(e){console.log('require.resolve('+JSON.stringify(t)+'):'.padEnd(40)+'NOT RESOLVABLE ('+e.code+')')}})" || true
-
       - name: 🚀 Version or Publish (npm)
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm changeset publish
+          # Bypass `pnpm changeset publish` — its OIDC TP path fails even
+          # when the upgraded npm is correctly on PATH (proven in PR #21
+          # debug step). The wrapper script calls `npm publish` directly
+          # via $PNPM_HOME/npm and is idempotent. ASW-174.
+          publish: bash infrastructure/scripts/publish-via-raw-npm.sh
           commit: "release: version packages"
           title: "release: version packages"
           createGithubReleases: true
