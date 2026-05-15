@@ -22,7 +22,7 @@ jobs:
       id-token: write # OIDC for npm Trusted Publishing + provenance attestation
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 0
           # RELEASE_PAT lets the version commit bypass branch protection.
@@ -30,28 +30,34 @@ jobs:
           token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
 
       - name: 📦 Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.4.0
         with:
           run_install: false
 
       - name: 🟢 Setup Node.js (npm registry)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
       - name: ⬆️ Upgrade npm for Trusted Publishing
-        # npm Trusted Publishing requires npm CLI v11.5.1+.
-        # The bundled npm 10.9.7 in the ubuntu-latest runner image is broken on
-        # self-upgrade (`Cannot find module 'promise-retry'`), so install via pnpm.
-        # PNPM_HOME is exported but actions/setup-node prepends its tool-cache bin
-        # AFTER pnpm/action-setup runs, so the bundled npm wins on PATH unless we
-        # explicitly add PNPM_HOME to GITHUB_PATH for subsequent steps. ASW-173
-        # caught this silently: TP fell back to setup-node's placeholder
-        # `_authToken` in `.npmrc` and the registry returned E404. See ASW-174.
+        # npm Trusted Publishing requires npm CLI v11.5.1+. Latest Node 22
+        # (22.22.3 at time of writing) still ships npm 10.9.8 — well below the
+        # threshold — so this step is still required. Pinned to a specific
+        # version rather than `@latest` so CI is reproducible (re-verified
+        # 2026-05-15 against `nodejs.org/dist/index.json`; ASW-165).
+        #
+        # The bundled npm 10.9.x in the ubuntu-latest runner image is broken
+        # on self-upgrade (`Cannot find module 'promise-retry'`), so install
+        # via pnpm. PNPM_HOME is exported but actions/setup-node prepends its
+        # tool-cache bin AFTER pnpm/action-setup runs, so the bundled npm
+        # wins on PATH unless we explicitly add PNPM_HOME to GITHUB_PATH for
+        # subsequent steps. ASW-173 caught this silently: TP fell back to
+        # setup-node's placeholder `_authToken` in `.npmrc` and the registry
+        # returned E404. See ASW-174.
         run: |
-          pnpm add -g npm@latest
+          pnpm add -g npm@11.14.1
           echo "$PNPM_HOME" >> "$GITHUB_PATH"
           echo "Upgraded npm at $PNPM_HOME/npm: $("$PNPM_HOME/npm" --version)"
 
@@ -63,7 +69,7 @@ jobs:
 
       - name: 🚀 Version or Publish (npm)
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
         with:
           # Bypass `pnpm changeset publish` — its OIDC TP path fails even
           # when the upgraded npm is correctly on PATH (proven in PR #21
@@ -90,7 +96,7 @@ jobs:
 
       - name: 🟢 Setup Node.js (GitHub Packages)
         if: steps.changesets.outputs.published == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
           registry-url: https://npm.pkg.github.com
