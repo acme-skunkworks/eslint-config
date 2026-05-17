@@ -5,6 +5,6 @@
   // `lint:md` script in package.json passes its own globs on the CLI, so
   // config globs are redundant for the standalone case.
   "config": {
-    "extends": "@robeasthope/markdownlint-config",
+    "extends": "@acme-skunkworks/markdownlint-config",
   },
 }

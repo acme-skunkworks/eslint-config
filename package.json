@@ -107,8 +107,8 @@
     "typescript-eslint": "^8.46.0"
   },
   "devDependencies": {
+    "@acme-skunkworks/markdownlint-config": "^2.0.0",
     "@changesets/cli": "^2.31.0",
-    "@robeasthope/markdownlint-config": "^1.1.1",
     "@types/eslint": "^9.6.1",
     "@types/node": "^25.6.0",
     "husky": "^9.1.7",
