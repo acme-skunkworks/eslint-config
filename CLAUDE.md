@@ -6,6 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Standalone home for `@acme-skunkworks/eslint-config` (extracted from `RobEasthope/protomolecule` — see `MIGRATION_FROM_PROTOMOLECULE.md`). Single ESLint v9 flat-config package, written in TypeScript, compiled to `dist/`, published from this repo via Changesets.
 
+## GitHub Actions repo config (ASW-176)
+
+Non-secret knobs shared by `ci.yml` and `release.yml` live in **`infrastructure/repo-config.yaml`**, loaded at runtime by the composite `.github/actions/load-repo-config` (`uses: ./.github/actions/load-repo-config`).
+
+| Key | Purpose |
+| --- | --- |
+| `defaultBranch` | Canonical default branch; keep in sync with static `on:` triggers (GitHub cannot derive `on.push.branches` from this file). |
+| `nodeVersionFile` | Passed to `actions/setup-node` `node-version-file`. |
+| `npmScope` | NPM scope for GitHub Packages publishing (`setup-node` `scope`). |
+| `npmRegistryUrl` | Public npm registry (`setup-node` when talking to npmjs). |
+| `githubPackagesRegistryUrl` | GitHub Packages npm registry URL for the GH Packages `setup-node` step. |
+
+Secrets (`RELEASE_PAT`, `GITHUB_TOKEN`), OIDC Trusted Publishing, and Changesets behaviour are unchanged — not in this file.
+
 ## Commands
 
 ```bash

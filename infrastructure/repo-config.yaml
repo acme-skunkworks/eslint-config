@@ -1,0 +1,11 @@
+# Non-secret repo policy consumed by CI and Release workflows via
+# .github/actions/load-repo-config — see CLAUDE.md (ASW-176).
+#
+# NOTE: Workflow triggers (on.push.branches) cannot reference this file at runtime;
+# keep defaultBranch in sync with branches listed in release.yml.
+
+defaultBranch: main
+nodeVersionFile: .nvmrc
+npmScope: "@acme-skunkworks"
+npmRegistryUrl: https://registry.npmjs.org
+githubPackagesRegistryUrl: https://npm.pkg.github.com

@@ -1,0 +1,76 @@
+---
+name: Load repo config
+description:
+  Loads non-secret CI/release knobs from infrastructure/repo-config.yaml into step outputs.
+
+outputs:
+  default_branch:
+    description: Canonical default branch name (mirrors workflows' static triggers where applicable).
+    value: ${{ steps.load.outputs.default_branch }}
+
+  node_version_file:
+    description: Path passed to actions/setup-node node-version-file.
+    value: ${{ steps.load.outputs.node_version_file }}
+
+  npm_scope:
+    description: NPM scope for GitHub Packages (setup-node scope input).
+    value: ${{ steps.load.outputs.npm_scope }}
+
+  npm_registry_url:
+    description: Public npm registry URL.
+    value: ${{ steps.load.outputs.npm_registry_url }}
+
+  github_packages_registry_url:
+    description: GitHub Packages npm registry URL.
+    value: ${{ steps.load.outputs.github_packages_registry_url }}
+
+runs:
+  using: composite
+  steps:
+    - id: load
+      shell: bash
+      run: |
+        set -euo pipefail
+        ruby -ryaml <<'RUBY'
+        cfg_path = File.join(
+          ENV.fetch("GITHUB_WORKSPACE"),
+          "infrastructure",
+          "repo-config.yaml"
+        )
+
+        unless File.file?(cfg_path)
+          warn("::error title=missing repo-config::Expected #{cfg_path}")
+          abort
+        end
+
+        cfg = YAML.load_file(cfg_path)
+        unless cfg.is_a?(Hash)
+          warn("::error title=invalid repo-config::Expected a YAML mapping")
+          abort
+        end
+
+        gh_out = ENV.fetch("GITHUB_OUTPUT")
+        pairs = {}
+
+        mapping = [
+          %w(default_branch defaultBranch),
+          %w(node_version_file nodeVersionFile),
+          %w(npm_scope npmScope),
+          %w(npm_registry_url npmRegistryUrl),
+          %w(github_packages_registry_url githubPackagesRegistryUrl)
+        ]
+
+        mapping.each do |(output_key, yaml_key)|
+          raw = cfg[yaml_key]
+          if raw.nil? || raw.to_s.strip.empty?
+            warn("::error title=missing key::#{yaml_key} missing or empty in infrastructure/repo-config.yaml")
+            abort
+          end
+
+          pairs[output_key] = raw.to_s.strip
+        end
+
+        File.open(gh_out, "a") do |f|
+          pairs.each { |name, value| f.puts("#{name}=#{value}") }
+        end
+        RUBY
