@@ -120,6 +120,7 @@
   ## What Changed
 
   ### Import Style Rules
+
   - **Disabled**: `canonical/prefer-inline-type-import`
   - **Changed**: `import/consistent-type-specifier-style` from `"prefer-inline"` to `"prefer-top-level"`
   - **Updated**: `import/no-duplicates` with `{ "prefer-inline": false }`
@@ -185,11 +186,13 @@
   ## Breaking Changes
 
   ### Style Enforcement
+
   - Projects using inline type imports will see lint errors
   - `lint:fix` will convert inline imports to top-level
   - Separate import statements for types and values are now the standard
 
   ### No Impact On
+
   - Runtime behavior (type imports are erased at compile time)
   - Type safety
   - Import functionality
@@ -202,9 +205,10 @@
   - Any project using React Router 7 with virtual type modules
 
   ## References
-  - Issue: https://github.com/RobEasthope/protomolecule/issues/333
-  - React Router Issue: https://github.com/remix-run/react-router/issues/12503
-  - TypeScript verbatimModuleSyntax: https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax
+
+  - Issue: <https://github.com/RobEasthope/protomolecule/issues/333>
+  - React Router Issue: <https://github.com/remix-run/react-router/issues/12503>
+  - TypeScript verbatimModuleSyntax: <https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax>
 
 ## 5.3.1
 
@@ -250,7 +254,7 @@
 
   **Related:**
   - Original issue: RobEasthope/hecate#377
-  - lint-staged absolute paths: https://github.com/okonet/lint-staged/issues/763
+  - lint-staged absolute paths: <https://github.com/okonet/lint-staged/issues/763>
 
 ## 5.3.0
 

@@ -65,6 +65,7 @@ Skip this step if no `package.json` was touched on the branch.
 2. Run `pnpm install --frozen-lockfile`. If it succeeds, the lockfile is already in sync — continue.
 3. If it fails, run `pnpm install` to update the lockfile.
 4. If `pnpm-lock.yaml` changed, stage and commit it before any other commits go in:
+
    ```bash
    git add pnpm-lock.yaml
    git commit -m "chore: update lockfile"
