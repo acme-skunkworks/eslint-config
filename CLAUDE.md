@@ -10,13 +10,13 @@ Standalone home for `@acme-skunkworks/eslint-config` (extracted from `RobEasthop
 
 Non-secret knobs shared by `ci.yml` and `release.yml` live in **`infrastructure/repo-config.yaml`**, loaded at runtime by the composite `.github/actions/load-repo-config` (`uses: ./.github/actions/load-repo-config`).
 
-| Key | Purpose |
-| --- | --- |
-| `defaultBranch` | Canonical default branch; keep in sync with static `on:` triggers (GitHub cannot derive `on.push.branches` from this file). |
-| `nodeVersionFile` | Passed to `actions/setup-node` `node-version-file`. |
-| `npmScope` | NPM scope for GitHub Packages publishing (`setup-node` `scope`). |
-| `npmRegistryUrl` | Public npm registry (`setup-node` when talking to npmjs). |
-| `githubPackagesRegistryUrl` | GitHub Packages npm registry URL for the GH Packages `setup-node` step. |
+| Key                         | Purpose                                                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `defaultBranch`             | Canonical default branch; keep in sync with static `on:` triggers (GitHub cannot derive `on.push.branches` from this file). |
+| `nodeVersionFile`           | Passed to `actions/setup-node` `node-version-file`.                                                                         |
+| `npmScope`                  | NPM scope for GitHub Packages publishing (`setup-node` `scope`).                                                            |
+| `npmRegistryUrl`            | Public npm registry (`setup-node` when talking to npmjs).                                                                   |
+| `githubPackagesRegistryUrl` | GitHub Packages npm registry URL for the GH Packages `setup-node` step.                                                     |
 
 Secrets (`RELEASE_PAT`, `GITHUB_TOKEN`), OIDC Trusted Publishing, and Changesets behaviour are unchanged — not in this file.
 
@@ -28,7 +28,7 @@ pnpm run build      # tsc → dist/ (the published artifact; consumers import fr
 pnpm tsc            # type-check only (no emit)
 pnpm lint           # lint this package's own source (index.ts + rules/** + infrastructure/**)
 pnpm lint:fix       # auto-fix
-pnpm lint:md        # markdownlint
+pnpm lint:md        # markdownlint (CI: build-and-lint job in ci.yml)
 pnpm lint:yaml      # yamllint . (semantic YAML check; warnings non-blocking)
 pnpm lint:workflows # actionlint on .github/workflows/
 pnpm lint:sh        # shellcheck on infrastructure/scripts/*.sh + .husky/*
@@ -52,6 +52,10 @@ Node 22 required (`.nvmrc`, `engines.node: ">=22"`, `engine-strict=true` in `.np
 Hooks are dormant in CI: `release.yml` and `ci.yml` set `HUSKY=0` so the `prepare` script no-ops during `pnpm install`.
 
 To bypass any hook in an emergency: `git commit --no-verify` or `git push --no-verify` — not recommended.
+
+## Markdown lint
+
+`markdownlint-cli2` reads `.markdownlint-cli2.jsonc`, which extends `@acme-skunkworks/markdownlint-config`. Pre-commit auto-fixes staged `**/*.{md,mdx}` via lint-staged (`|| true`, so it never blocks). **CI enforces:** the `build-and-lint` job in `ci.yml` runs `pnpm lint:md` after ESLint.
 
 ## Validating workflows and YAML
 

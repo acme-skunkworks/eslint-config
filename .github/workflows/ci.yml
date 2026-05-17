@@ -44,6 +44,9 @@ jobs:
       - name: 🔬 Lint
         run: pnpm run lint
 
+      - name: 📝 Lint Markdown
+        run: pnpm run lint:md
+
       - name: 📝 Changeset status
         run: pnpm changeset status --since=origin/${{ github.base_ref }}
         continue-on-error: true

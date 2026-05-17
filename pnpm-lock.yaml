@@ -65,12 +65,12 @@ importers:
         specifier: ^8.46.0
         version: 8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3)
     devDependencies:
+      "@acme-skunkworks/markdownlint-config":
+        specifier: ^2.0.0
+        version: 2.0.0
       "@changesets/cli":
         specifier: ^2.31.0
         version: 2.31.0(@types/node@25.6.0)
-      "@robeasthope/markdownlint-config":
-        specifier: ^1.1.1
-        version: 1.1.1
       "@types/eslint":
         specifier: ^9.6.1
         version: 9.6.1
@@ -103,6 +103,13 @@ importers:
         version: 4.1.6(@types/node@25.6.0)(vite@8.0.13(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.1)(yaml@2.8.3))
 
 packages:
+  "@acme-skunkworks/markdownlint-config@2.0.0":
+    resolution:
+      {
+        integrity: sha512-FIAKkLRbjuzD5JgGRp9hHcgPiy7CX9GnNzkqKXP/7R1hPodbNZi9w84blt3SL5K05KBOYfCY93SWOwcQVQS1fA==,
+      }
+    engines: { node: ">=22" }
+
   "@astrojs/compiler@3.0.1":
     resolution:
       {
@@ -1107,12 +1114,6 @@ packages:
     resolution:
       {
         integrity: sha512-Javneu5lsuhwNCryN+pXH93VPQ8g0dBX7wItHFgYiwQmzE1sVdg5tWHiOgHywzL2W21XQopa7IwIEnNbmeUJYA==,
-      }
-
-  "@robeasthope/markdownlint-config@1.1.1":
-    resolution:
-      {
-        integrity: sha512-3tdg75f0znDLLUDvgAyiB7SWHzK1SbiSuTrMc1+CFwyF/eEiq195Z/z8vBFF+m1B0s9Fjizq+VO6XusHGQ3aqA==,
       }
 
   "@rolldown/binding-android-arm64@1.0.1":
@@ -6113,6 +6114,8 @@ packages:
       }
 
 snapshots:
+  "@acme-skunkworks/markdownlint-config@2.0.0": {}
+
   "@astrojs/compiler@3.0.1": {}
 
   "@babel/code-frame@7.29.0":
@@ -6875,8 +6878,6 @@ snapshots:
   "@pkgr/core@0.2.9": {}
 
   "@repeaterjs/repeater@3.0.6": {}
-
-  "@robeasthope/markdownlint-config@1.1.1": {}
 
   "@rolldown/binding-android-arm64@1.0.1":
     optional: true

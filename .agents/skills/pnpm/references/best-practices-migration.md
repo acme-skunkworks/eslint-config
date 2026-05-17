@@ -142,6 +142,7 @@ pnpm install
    ```
 
 3. Install:
+
    ```bash
    rm -rf node_modules packages/*/node_modules package-lock.json
    pnpm install
