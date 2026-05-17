@@ -26,7 +26,7 @@ The port is a clean copy of the source files with these deliberate edits:
 ### Build / tooling
 
 - `tsconfig.json` previously extended `@robeasthope/tsconfig/base.json`, which is a `private: true` workspace package and is **not published on npm**. The base config has been **inlined** into `tsconfig.json` rather than depended on. Resulting compiler options are functionally equivalent to the previous setup.
-- `devDependencies`: dropped `@robeasthope/tsconfig: workspace:*` (inlined as above). Replaced `@robeasthope/markdownlint-config: workspace:*` with `^1.1.1` (the published npm version) since this package is published.
+- `devDependencies`: dropped `@robeasthope/tsconfig: workspace:*` (inlined as above). Replaced `@robeasthope/markdownlint-config: workspace:*` with `@acme-skunkworks/markdownlint-config@^2.0.0` (renamed scope; see ASW-178).
 - Lint scripts: replaced `--cache-location ../../.turbo/.eslintcache-eslint-config` (Turborepo-specific monorepo path) with `--cache-location ./.eslintcache` (local). Added `.turbo/`, `.eslintcache*`, and `*.tsbuildinfo` to `.gitignore`.
 
 ### Preserved verbatim
@@ -36,7 +36,7 @@ The port is a clean copy of the source files with these deliberate edits:
 - The `eslint-plugin-import-x` alias hack in `index.ts` — the plugin is still registered under both `import` (for `eslint-config-canonical` back-compat) and `import-x` (the canonical name).
 - Inline comments and JSDoc references to `https://github.com/RobEasthope/protomolecule/issues/...` (issues #259, #299, #323, #327, #333, #360, #365). These document the rationale behind non-obvious rule choices and remain accurate as historical context. The protomolecule issues stay readable on GitHub.
 - `eslint.config.ts` (the package's own self-lint config) — composes the same imports as `index.ts` does, just a smaller subset.
-- `.markdownlint-cli2.jsonc` — still extends `@robeasthope/markdownlint-config` (the npm-published config).
+- `.markdownlint-cli2.jsonc` — extends `@acme-skunkworks/markdownlint-config` (the npm-published config).
 - `.prettierignore` — unchanged.
 - `CHANGELOG.md` — copied verbatim so the v6.2.1 history continuity is preserved.
 - `README.md` — copied; will be rewritten in a follow-up commit (ASW-56) to reflect the new repo and scope.
@@ -52,49 +52,49 @@ Tempest's source files aren't in tree, so this diff is between Tempest's compile
 
 Tempest is generally newer than protomolecule. v1.0.0's bumps will go to current latest at execution time, so Tempest's pins are a starting point not the ceiling.
 
-| Plugin | protomolecule (ours) | Tempest |
-|---|---|---|
-| `astro-eslint-parser` | `^1.0.0` | `^1.3.0` |
-| `eslint-config-canonical` | `^45.0.1` | `^47.4.2` |
-| `eslint-plugin-astro` | `^1.0.0` | `^1.6.0` |
-| `eslint-plugin-import-x` | `^4.16.1` | `^4.16.1` |
-| `eslint-plugin-jsdoc` | `^60.8.2` | `^62.7.1` |
-| `eslint-plugin-jsx-a11y` | `^6.10.2` | `^6.10.2` |
-| `eslint-plugin-n` | `^17.23.1` | `^17.24.0` |
-| `eslint-plugin-prettier` | `^5.5.4` | `^5.5.5` |
-| `eslint-plugin-promise` | `^7.2.1` | `^7.2.1` |
-| `eslint-plugin-react` | `^7.37.5` | `^7.37.5` |
-| `eslint-plugin-react-hooks` | `^7.0.1` | `^7.0.1` |
-| `eslint-plugin-regexp` | `^2.10.0` | `^3.0.0` |
-| `eslint-plugin-unicorn` | `^61.0.2` | `^63.0.0` |
-| `globals` | `^16.4.0` | `^17.4.0` |
-| `typescript-eslint` | `^8.46.0` | `^8.56.1` |
+| Plugin                      | protomolecule (ours) | Tempest    |
+| --------------------------- | -------------------- | ---------- |
+| `astro-eslint-parser`       | `^1.0.0`             | `^1.3.0`   |
+| `eslint-config-canonical`   | `^45.0.1`            | `^47.4.2`  |
+| `eslint-plugin-astro`       | `^1.0.0`             | `^1.6.0`   |
+| `eslint-plugin-import-x`    | `^4.16.1`            | `^4.16.1`  |
+| `eslint-plugin-jsdoc`       | `^60.8.2`            | `^62.7.1`  |
+| `eslint-plugin-jsx-a11y`    | `^6.10.2`            | `^6.10.2`  |
+| `eslint-plugin-n`           | `^17.23.1`           | `^17.24.0` |
+| `eslint-plugin-prettier`    | `^5.5.4`             | `^5.5.5`   |
+| `eslint-plugin-promise`     | `^7.2.1`             | `^7.2.1`   |
+| `eslint-plugin-react`       | `^7.37.5`            | `^7.37.5`  |
+| `eslint-plugin-react-hooks` | `^7.0.1`             | `^7.0.1`   |
+| `eslint-plugin-regexp`      | `^2.10.0`            | `^3.0.0`   |
+| `eslint-plugin-unicorn`     | `^61.0.2`            | `^63.0.0`  |
+| `globals`                   | `^16.4.0`            | `^17.4.0`  |
+| `typescript-eslint`         | `^8.46.0`            | `^8.56.1`  |
 
 Tempest also adds `prettier: ^3.8.1` as a `peerDependency`. We adopt this — it makes the prettier dependency contract explicit at install time.
 
 ### Rule presets — what changed
 
-| Preset | Status | Notes |
-|---|---|---|
-| `astro` | identical | |
-| `commonjs` | identical | |
-| `frameworkRouting` | identical | |
-| `ignoredFileAndFolders` | identical | |
-| `packageJson` | identical | |
-| `reactRouterExceptions` | identical | |
-| `storybook` | identical | |
-| `typescriptOverrides` | identical | |
-| `preferences` | **delta** | Tempest's `import/no-extraneous-dependencies.devDependencies` allow-list adds `**/*.setup.{ts,js}`, `**/test-utils.{ts,tsx}`, `**/routes.ts`. Folded in for v1.0.0. |
-| `testFiles` | **delta** | Tempest adds `"@typescript-eslint/triple-slash-reference": "off"` to support Vitest setup files using `/// <reference types="..." />` to augment global types. Folded in for v1.0.0. |
-| `sanity` | **Tempest dropped** | Tempest doesn't use Sanity, so the preset was removed. We **keep** the preset and make it an opt-in named export — consumers in non-Sanity projects don't import it. |
+| Preset                  | Status              | Notes                                                                                                                                                                                |
+| ----------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `astro`                 | identical           |                                                                                                                                                                                      |
+| `commonjs`              | identical           |                                                                                                                                                                                      |
+| `frameworkRouting`      | identical           |                                                                                                                                                                                      |
+| `ignoredFileAndFolders` | identical           |                                                                                                                                                                                      |
+| `packageJson`           | identical           |                                                                                                                                                                                      |
+| `reactRouterExceptions` | identical           |                                                                                                                                                                                      |
+| `storybook`             | identical           |                                                                                                                                                                                      |
+| `typescriptOverrides`   | identical           |                                                                                                                                                                                      |
+| `preferences`           | **delta**           | Tempest's `import/no-extraneous-dependencies.devDependencies` allow-list adds `**/*.setup.{ts,js}`, `**/test-utils.{ts,tsx}`, `**/routes.ts`. Folded in for v1.0.0.                  |
+| `testFiles`             | **delta**           | Tempest adds `"@typescript-eslint/triple-slash-reference": "off"` to support Vitest setup files using `/// <reference types="..." />` to augment global types. Folded in for v1.0.0. |
+| `sanity`                | **Tempest dropped** | Tempest doesn't use Sanity, so the preset was removed. We **keep** the preset and make it an opt-in named export — consumers in non-Sanity projects don't import it.                 |
 
 ### New presets in Tempest (ported as opt-in named exports for v1.0.0)
 
-| Preset | What it does | Generalisation applied during fold-in |
-|---|---|---|
-| `complexity` | Raises cyclomatic-complexity threshold for files where the elevated count is structural rather than smelly. | Drops the Studio-specific `**/duplicates.tsx` glob; keeps the broad `**/scripts/**/*.ts` (40). Consumers add their own per-file overrides. |
-| `e2e` | Disables `react-hooks/rules-of-hooks` for Playwright fixture callbacks (false positive). | Keeps `**/e2e/**/*.{ts,tsx}` glob; drops the Tempest-specific `**/fixtures/authenticated*` glob. |
-| `tableComponents` (renamed from `studioTables`) | Disables `react/no-unstable-nested-components` for TanStack Table / Refine column-cell renderers. | Drops Studio-specific filenames (`list.tsx`, `duplicates.tsx`, `LookupList.tsx`, `*Table.tsx` is generalised to `**/*Table.tsx` only). Renamed for clarity. |
+| Preset                                          | What it does                                                                                                | Generalisation applied during fold-in                                                                                                                       |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `complexity`                                    | Raises cyclomatic-complexity threshold for files where the elevated count is structural rather than smelly. | Drops the Studio-specific `**/duplicates.tsx` glob; keeps the broad `**/scripts/**/*.ts` (40). Consumers add their own per-file overrides.                  |
+| `e2e`                                           | Disables `react-hooks/rules-of-hooks` for Playwright fixture callbacks (false positive).                    | Keeps `**/e2e/**/*.{ts,tsx}` glob; drops the Tempest-specific `**/fixtures/authenticated*` glob.                                                            |
+| `tableComponents` (renamed from `studioTables`) | Disables `react/no-unstable-nested-components` for TanStack Table / Refine column-cell renderers.           | Drops Studio-specific filenames (`list.tsx`, `duplicates.tsx`, `LookupList.tsx`, `*Table.tsx` is generalised to `**/*Table.tsx` only). Renamed for clarity. |
 
 These three are exported but **not** part of the default flat-config composition — consumers `import { complexity, e2e, tableComponents } from "@acme-skunkworks/eslint-config"` and spread into their own config.
 
