@@ -8,6 +8,7 @@ import type { Linter } from "eslint";
  * `.react-router`, `.wrangler`, `.vscode`, `.claude`), `node_modules`, and
  * the lock file. Also ignores `tsconfig.json` and the consumer's own
  * `eslint.config.{ts,mjs}` — those are tooling input, not source to lint.
+ * @see https://eslint.org/docs/latest/use/configure/ignore
  */
 export const ignoredFileAndFolders = {
   ignores: [

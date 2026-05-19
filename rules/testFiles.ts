@@ -20,27 +20,26 @@ export const testFiles = {
     "**/*.test.{ts,tsx,js,jsx}",
     "**/*.spec.{ts,tsx,js,jsx}",
     "**/__tests__/**/*.{ts,tsx,js,jsx}",
-    // Test setup files - specific framework names to avoid false positives
     "**/{vitest,jest,playwright,test}.setup.{ts,js}",
-    // Setup files in test directories
     "**/__tests__/**/*.setup.{ts,js}",
     "**/tests/**/*.setup.{ts,js}",
   ],
   rules: {
-    // Relax TypeScript strict rules for test files where `any` is acceptable
-    // for testing type validation and error handling
+    // @typescript-eslint/no-explicit-any — disallows the `any` type.
+    // Warn in tests: fixtures and error-path tests often need `any` for edge-case coverage.
+    // https://typescript-eslint.io/rules/no-explicit-any
     "@typescript-eslint/no-explicit-any": "warn",
-
-    // Allow non-null assertions in test files where preconditions are asserted
-    // and the test would fail anyway if the assumption is wrong
+    // @typescript-eslint/no-non-null-assertion — disallows postfix `!` non-null assertions.
+    // Warn in tests: preconditions are often asserted; failure surfaces as a test failure anyway.
+    // https://typescript-eslint.io/rules/no-non-null-assertion
     "@typescript-eslint/no-non-null-assertion": "warn",
-
-    // Vitest setup files use `/// <reference types="..." />` to augment global
-    // types (e.g. `@testing-library/jest-dom`); the rule is a false positive there.
+    // @typescript-eslint/triple-slash-reference — disallows `/// <reference … />` directives.
+    // Off in setup files: Vitest/Jest setups use triple-slash to augment global types.
+    // https://typescript-eslint.io/rules/triple-slash-reference
     "@typescript-eslint/triple-slash-reference": "off",
-
-    // Allow devDependencies in test files and setup files
-    // Test dependencies should be in devDependencies, not dependencies
+    // import/no-extraneous-dependencies — forbids importing packages not listed in package.json.
+    // Error + devDependencies true: test-only packages belong in devDependencies, not dependencies.
+    // https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/no-extraneous-dependencies.md
     "import/no-extraneous-dependencies": [
       "error",
       {

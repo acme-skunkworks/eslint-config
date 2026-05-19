@@ -15,10 +15,10 @@ import type { Linter } from "eslint";
 import eslintConfigCanonicalAuto from "eslint-config-canonical/auto";
 import pluginImportX from "eslint-plugin-import-x";
 
-// Plugin aliasing for eslint-config-canonical compatibility.
-// Canonical references "import" but the package is "eslint-plugin-import-x".
-// Register under both names so canonical's rules resolve and modern code works.
+// Plugin aliasing — registers eslint-plugin-import-x under both `import` and `import-x`.
+// Canonical's config references the `import` plugin name; we ship import-x. Both names must resolve.
 // See: https://github.com/RobEasthope/protomolecule/issues/259
+// https://github.com/un-ts/eslint-plugin-import-x
 const importXAlias: any = {
   plugins: {
     import: pluginImportX,
@@ -35,6 +35,8 @@ const importXAlias: any = {
 export const base: Linter.Config[] = [
   importXAlias,
   ignoredFileAndFolders,
+  // eslint-config-canonical/auto — upstream baseline (most rules live here, not in rules/*.ts).
+  // Per-rule inventory: https://github.com/gajus/eslint-config-canonical
   ...(eslintConfigCanonicalAuto as Linter.Config[]),
   packageJson,
   commonjs,

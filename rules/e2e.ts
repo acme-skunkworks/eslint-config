@@ -17,6 +17,9 @@ import type { Linter } from "eslint";
 export const e2e = {
   files: ["**/e2e/**/*.{ts,tsx}"],
   rules: {
+    // react-hooks/rules-of-hooks — enforces Rules of Hooks (only call hooks at top level).
+    // Off in e2e: Playwright `test.extend` fixture factories are misread as hook calls.
+    // https://react.dev/reference/eslint-plugin-react-hooks#rules-of-hooks
     "react-hooks/rules-of-hooks": "off",
   },
 } satisfies Linter.Config;

@@ -15,9 +15,13 @@ export const storybook: Linter.Config = {
   files: ["**/*.stories.ts", "**/*.stories.tsx"],
   ignores: ["**/storybook-static/**/*"],
   rules: {
+    // canonical/filename-match-exported — requires default export name to match the filename.
+    // Off: stories are named `Component.stories.tsx`, not after the default export symbol.
+    // https://github.com/gajus/eslint-plugin-canonical#rules
     "canonical/filename-match-exported": "off",
-    // Disable type-aware linting for Storybook files excluded from tsconfig
-    // This keeps syntax-based rules active while avoiding project reference errors
+    // typescript-eslint disableTypeChecked — turns off rules that need type information.
+    // Spread: story files are often excluded from tsconfig; avoids "not in project" errors.
+    // https://typescript-eslint.io/users/configs#disable-type-checked
     ...tseslint.configs.disableTypeChecked.rules,
   },
 } satisfies Linter.Config;

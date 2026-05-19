@@ -10,7 +10,13 @@ import type { Linter } from "eslint";
 export const typescriptOverrides = {
   files: ["**/*.{ts,tsx}"],
   rules: {
+    // react/no-unused-prop-types — flags PropTypes declared but never used in the component.
+    // Off under TS: prop types are checked by TypeScript, not runtime PropTypes.
+    // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unused-prop-types.md
     "react/no-unused-prop-types": "off",
+    // react/prop-types — requires React components to declare PropTypes for props.
+    // Off under TS: interfaces/types replace PropTypes for compile-time checking.
+    // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/prop-types.md
     "react/prop-types": "off",
   },
 } satisfies Linter.Config;
