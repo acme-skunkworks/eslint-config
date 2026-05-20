@@ -24,9 +24,10 @@ export const frameworkRouting = {
     "**/src/pages/**/*.{ts,tsx,js,jsx}", // Astro pattern
   ],
   rules: {
-    // Disable filename-match-exported for framework routing directories
-    // File-based routing requires specific filenames (e.g., root.tsx, home.tsx)
-    // that don't match exported component names (e.g., Layout, Home, meta)
+    // canonical/filename-match-exported — requires default export name to match the filename.
+    // Off in routing dirs: file-based routes use conventional names (root.tsx, page.tsx) not export names.
+    // See: https://github.com/RobEasthope/protomolecule/issues/299
+    // https://github.com/gajus/eslint-plugin-canonical#rules
     "canonical/filename-match-exported": "off",
   },
 } satisfies Linter.Config;

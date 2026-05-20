@@ -20,6 +20,9 @@ export const complexity: Linter.Config[] = [
   {
     files: ["**/scripts/**/*.{ts,tsx,js,mjs}"],
     rules: {
+      // complexity — limits cyclomatic complexity per function (branching paths).
+      // Error + max 40: orchestration scripts are linear step lists; default threshold is too low.
+      // https://eslint.org/docs/latest/rules/complexity
       complexity: ["error", 40],
     },
   } satisfies Linter.Config,

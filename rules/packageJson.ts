@@ -11,6 +11,9 @@ import type { Linter } from "eslint";
 export const packageJson = {
   files: ["**/package.json"],
   rules: {
+    // jsonc/sort-keys — enforces alphabetical (or configured) key order in JSON/JSONC files.
+    // Off: sort-package-json (lint-staged) owns package.json field order with npm conventions.
+    // https://ota.github.io/eslint-plugin-jsonc/rules/sort-keys.html
     "jsonc/sort-keys": "off",
   },
 } satisfies Linter.Config;

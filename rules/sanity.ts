@@ -21,6 +21,9 @@ import type { Linter } from "eslint";
 const sanitySchemaPropertyOrdering = {
   files: ["**/*.schema.ts"],
   rules: {
+    // perfectionist/sort-objects — enforces consistent ordering of object keys/properties.
+    // Error with custom groups: Sanity defineField/defineType objects follow identity → fields → validation order.
+    // https://perfectionist.dev/rules/sort-objects
     "perfectionist/sort-objects": [
       "error",
       {
@@ -123,7 +126,15 @@ const sanitySchemaPropertyOrdering = {
 const sanityStructure = {
   files: ["**/sanity.structure.ts", "**/deskStructure.ts"],
   rules: {
+    // func-style — requires `function foo() {}` over `const foo = function () {}` / arrows.
+    // Off: Sanity structure resolvers use `export const structure = (S) => …` arrow pattern.
+    // See: https://github.com/RobEasthope/protomolecule/issues/365
+    // https://eslint.org/docs/latest/rules/func-style
     "func-style": "off",
+    // id-length — enforces minimum identifier length (flags single-letter names).
+    // Off: Sanity docs universally use `S` for the StructureBuilder parameter.
+    // See: https://github.com/RobEasthope/protomolecule/issues/365
+    // https://eslint.org/docs/latest/rules/id-length
     "id-length": "off",
   },
 } satisfies Linter.Config;

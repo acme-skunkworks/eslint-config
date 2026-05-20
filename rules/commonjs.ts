@@ -6,7 +6,8 @@ import globals from "globals";
  *
  * `.cjs` parser shim: sets `sourceType: "script"` plus Node + ES2021 globals
  * so CommonJS files (legacy config files, certain tooling shims) parse
- * cleanly under the otherwise-ESM-default flat config.
+ * cleanly under the otherwise-ESM-default flat config. No rules — only `languageOptions`.
+ * @see https://eslint.org/docs/latest/use/configure/language-options
  */
 export const commonjs = {
   files: ["**/*.cjs"],

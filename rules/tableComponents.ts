@@ -18,6 +18,9 @@ import type { Linter } from "eslint";
 export const tableComponents = {
   files: ["**/*Table.tsx"],
   rules: {
+    // react/no-unstable-nested-components — forbids defining components inside render (re-mount risk).
+    // Off in *Table.tsx: TanStack/Refine column cell renderers are inline by API; defs are memoised.
+    // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unstable-nested-components.md
     "react/no-unstable-nested-components": "off",
   },
 } satisfies Linter.Config;
