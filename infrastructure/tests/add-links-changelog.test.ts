@@ -59,4 +59,10 @@ describe("splitFrontmatter", () => {
     expect(fm).toBe("");
     expect(body).toBe("no frontmatter here");
   });
+
+  it("splits an empty frontmatter block (closing fence at index 3)", () => {
+    const { body, fm } = splitFrontmatter("---\n---\n\n## Added\n\n- y\n");
+    expect(fm).toBe("---\n---\n");
+    expect(body).toBe("\n## Added\n\n- y\n");
+  });
 });

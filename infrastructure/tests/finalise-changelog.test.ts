@@ -157,4 +157,23 @@ describe("makeResolver", () => {
     };
     expect(makeResolver(run)("any-branch")).toBeNull();
   });
+
+  it("returns null mergeStrategy when the PR has no merge commit", () => {
+    const { run } = makeRunner({
+      "gh pr list": () => JSON.stringify([{ number: 1 }]),
+    });
+    expect(makeResolver(run)("b")?.mergeStrategy).toBeNull();
+  });
+
+  it("returns null stat fields when gh omits them (so no NaN is written)", () => {
+    const { run } = makeRunner({
+      "gh pr list": () =>
+        JSON.stringify([{ mergeCommit: { oid: "m" }, number: 7 }]),
+      "git cat-file": () => "tree x\nparent p1\n",
+    });
+    const resolved = makeResolver(run)("b");
+    expect(resolved?.additions).toBeNull();
+    expect(resolved?.deletions).toBeNull();
+    expect(resolved?.changedFiles).toBeNull();
+  });
 });

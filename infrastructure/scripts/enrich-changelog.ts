@@ -75,16 +75,18 @@ export function enrichFrontmatter(raw: string, input: EnrichInput): string {
     !Array.isArray(fm.stats)
       ? { ...(fm.stats as Record<string, unknown>) }
       : {};
-  if (input.additions !== null && input.additions !== undefined) {
-    stats.loc_added = Number.parseInt(input.additions, 10);
+  // Guard with blank() (not just null/undefined): an empty string would slip
+  // through and Number.parseInt("", 10) is NaN, which the validator rejects.
+  if (!blank(input.additions)) {
+    stats.loc_added = Number.parseInt(input.additions as string, 10);
   }
 
-  if (input.deletions !== null && input.deletions !== undefined) {
-    stats.loc_removed = Number.parseInt(input.deletions, 10);
+  if (!blank(input.deletions)) {
+    stats.loc_removed = Number.parseInt(input.deletions as string, 10);
   }
 
-  if (input.changedFiles !== null && input.changedFiles !== undefined) {
-    stats.files_changed = Number.parseInt(input.changedFiles, 10);
+  if (!blank(input.changedFiles)) {
+    stats.files_changed = Number.parseInt(input.changedFiles as string, 10);
   }
 
   fm.stats = stats;

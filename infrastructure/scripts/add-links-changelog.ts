@@ -51,7 +51,11 @@ export function splitFrontmatter(raw: string): { body: string; fm: string } {
     return { body: raw, fm: "" };
   }
 
-  const end = raw.indexOf("\n---\n", 4);
+  // Search from index 3: the opening "---\n" is exactly 4 bytes, so the
+  // earliest a closing "\n---\n" can start is index 3 (the newline ending the
+  // opening fence). Starting at 4 would miss the close of an empty frontmatter
+  // ("---\n---\n").
+  const end = raw.indexOf("\n---\n", 3);
   if (end === -1) {
     return { body: raw, fm: "" };
   }

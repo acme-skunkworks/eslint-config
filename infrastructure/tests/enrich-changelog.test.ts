@@ -95,6 +95,18 @@ describe("enrichFrontmatter", () => {
     expect(matter(out).data).not.toHaveProperty("affected_packages");
   });
 
+  it("treats empty-string stat inputs as absent (no NaN written)", () => {
+    const out = enrichFrontmatter(placeholderEntry(), {
+      additions: "",
+      branch: BASE.branch,
+      changedFiles: "",
+      deletions: "",
+      mergedAt: BASE.mergedAt,
+      mergeSha: BASE.mergeSha,
+    });
+    expect(matter(out).data.stats).toEqual({});
+  });
+
   it("throws when created_at is missing", () => {
     const raw = "---\ntitle: x\nbranch: b\n---\n\n## Fixed\n\n- x\n";
     expect(() => enrichFrontmatter(raw, BASE)).toThrow(/no created_at/);

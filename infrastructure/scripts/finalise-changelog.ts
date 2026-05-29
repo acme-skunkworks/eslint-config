@@ -24,9 +24,9 @@ import { join } from "node:path";
 export const CHANGELOG_DIR = "changelog";
 
 export type ResolvedPr = {
-  additions: string;
-  changedFiles: string;
-  deletions: string;
+  additions: null | string;
+  changedFiles: null | string;
+  deletions: null | string;
   mergedAt: string;
   mergeSha: string;
   mergeStrategy: null | string;
@@ -145,10 +145,13 @@ export function makeResolver(run: Runner): PrResolver {
       }
     }
 
+    // Absent numeric fields stay null (not ""), so the enrich guard skips them
+    // rather than parsing "" into NaN.
     return {
-      additions: String(pr.additions ?? ""),
-      changedFiles: String(pr.changedFiles ?? ""),
-      deletions: String(pr.deletions ?? ""),
+      additions: pr.additions === undefined ? null : String(pr.additions),
+      changedFiles:
+        pr.changedFiles === undefined ? null : String(pr.changedFiles),
+      deletions: pr.deletions === undefined ? null : String(pr.deletions),
       mergedAt: pr.mergedAt ?? "",
       mergeSha,
       mergeStrategy,
