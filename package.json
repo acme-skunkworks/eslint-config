@@ -131,10 +131,5 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "unrs-resolver"
-    ]
   }
 }
