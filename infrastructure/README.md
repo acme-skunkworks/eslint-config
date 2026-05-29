@@ -13,7 +13,8 @@ infrastructure/
     ensure-yamllint.sh              # extracted from .github/workflows/ci.yml
     ensure-actionlint.sh            # extracted from .github/workflows/ci.yml
     ensure-bats.sh                  # extracted from .github/workflows/ci.yml
-    publish-via-raw-npm.sh          # release.yml publish step (bypasses pnpm)
+    publish-via-raw-npm.sh          # release.yml npm publish step (bypasses pnpm)
+    publish-to-github-packages.sh   # release.yml GitHub Packages publish step (idempotent)
   tests/
     *.test.ts                       # vitest, run via `pnpm test`
     *.bats                          # bats-core, run via `pnpm test:sh`
