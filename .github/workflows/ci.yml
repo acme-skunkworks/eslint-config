@@ -154,3 +154,6 @@ jobs:
 
       - name: 🧪 Bats
         run: pnpm test:sh
+
+      - name: 📓 Validate changelog entries
+        run: pnpm validate:changelog
