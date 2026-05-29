@@ -9,8 +9,8 @@ import type { Linter } from "eslint";
  * Property ordering follows a logical grouping:
  * 1. Identity: name, title, type, icon
  * 2. Fields: fields (placed early so document content stays visually prominent)
- * 3. Organization: fieldset, group, groups, fieldsets
- * 4. Behavior: hidden, readOnly
+ * 3. Organisation: fieldset, group, groups, fieldsets
+ * 4. Behaviour: hidden, readOnly
  * 5. Type-specific: options, rows, to, of, marks, styles
  * 6. Content defaults: initialValue, description
  * 7. Validation: validation
@@ -37,13 +37,13 @@ const sanitySchemaPropertyOrdering = {
           // 2. Fields array (placed early so the schema's content stays visually prominent)
           { elementNamePattern: "^fields$", groupName: "fields" },
 
-          // 3. Organization - where does it go?
+          // 3. Organisation - where does it go?
           { elementNamePattern: "^fieldset$", groupName: "fieldset" },
           { elementNamePattern: "^group$", groupName: "group" },
           { elementNamePattern: "^groups$", groupName: "groups" },
           { elementNamePattern: "^fieldsets$", groupName: "fieldsets" },
 
-          // 4. Behavior - how does it behave?
+          // 4. Behaviour - how does it behave?
           { elementNamePattern: "^hidden$", groupName: "hidden" },
           { elementNamePattern: "^readOnly$", groupName: "readOnly" },
 
@@ -74,12 +74,12 @@ const sanitySchemaPropertyOrdering = {
           "icon",
           // Fields
           "fields",
-          // Organization
+          // Organisation
           "fieldset",
           "group",
           "groups",
           "fieldsets",
-          // Behavior
+          // Behaviour
           "hidden",
           "readOnly",
           // Type-specific
@@ -147,7 +147,7 @@ const sanityStructure = {
  * Combined Sanity ESLint configuration. Exports an array of two configs
  * documented inline above: schema property ordering for `*.schema.ts` (a
  * perfectionist `sort-objects` rule with custom groups so identity → fields
- * → behavior → validation appear in a deterministic, readable order) and
+ * → behaviour → validation appear in a deterministic, readable order) and
  * structure-file exceptions (allows the `S => S.list()` arrow-function
  * pattern and the canonical single-letter `S` parameter that Sanity's docs
  * universally use for the StructureBuilder).
