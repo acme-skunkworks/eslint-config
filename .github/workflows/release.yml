@@ -27,9 +27,11 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          # RELEASE_PAT lets the version commit bypass branch protection.
-          # Required scopes: repo, workflow. Falls back to GITHUB_TOKEN if unset.
-          token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+          # Plain GITHUB_TOKEN — the version PR is opened with it and merged by
+          # the road-runner-bot orchestrator (private release-orchestrator repo),
+          # whose App-token merge re-fires this workflow to publish. The bot's
+          # private key never touches this public repo's CI (ASW-311 / ASW-312).
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ⚙️ Load repo config
         id: repo

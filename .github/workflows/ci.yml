@@ -15,7 +15,11 @@ permissions:
 jobs:
   build-and-lint:
     name: 🔬 Build & Lint
-    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    # Deliberately NOT skipped on changeset-release/* — this job is the required
+    # status check that gates the version PR (ASW-311). The road-runner-bot
+    # orchestrator reopens the version PR to trigger this run, then merges once
+    # it's green. The version PR's only generated file, CHANGELOG.md, is excluded
+    # from lint:md (see package.json) so changesets output can't redden the gate.
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
