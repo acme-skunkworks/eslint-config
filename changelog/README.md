@@ -1,0 +1,108 @@
+# Changelog
+
+One Markdown file per change, capturing what changed and why. Entries are written by the `/send-it` slash command at PR-creation time and finalised by GitHub Actions after merge.
+
+This is a browsable, per-change, machine-readable companion to the root `CHANGELOG.md` (which Changesets still owns for npm release notes). Each entry carries a `version` so it can be tied back to the published release it shipped in.
+
+## File naming
+
+```text
+changelog/YYYYMMDD-HHMMSS-<slug>.md
+```
+
+- Timestamp is UTC and matches `created_at` in the frontmatter.
+- Slug: lowercase, non-alphanumerics replaced with `-`, repeats collapsed, ~60-char cap on a word boundary.
+
+## Frontmatter schema
+
+```yaml
+---
+title: "Concise summary of the change"
+release_note: "One-sentence user-facing summary" # nullable
+version: "1.0.3" # semver; filled at release time
+created_at: "2026-05-23T14:55:37Z" # set once; never overwritten
+merged_at: # filled by the enrich workflow
+branch: "asw-123-feature-slug" # stable lookup key for enrichment
+pr: # filled when known
+commit: # 7-char merge SHA; filled by enrichment
+merge_strategy: # squash | merge | rebase; filled by enrichment
+author: "you@example.com"
+co_authors: []
+category: feature # feature | fix | chore | docs | refactor | perf
+breaking: false
+issues: ["ASW-123"] # Linear issue IDs
+stats: # filled by the enrich workflow
+  files_changed:
+  loc_added:
+  loc_removed:
+---
+```
+
+### Differences from octavo's schema
+
+This package is a single, semver'd npm package — not a monorepo — so the schema is adapted:
+
+- **`version` added.** octavo has no version numbers; here every entry records the published release it shipped in.
+- **`affected_packages` removed.** There is only one package.
+
+### Required fields
+
+`title`, `created_at`, `category`, `breaking`.
+
+Everything else is validated _by type when present_ but not required. This lets two kinds of entry both validate:
+
+- **Backfilled historical entries**, which have no `branch` / `author` / `stats`.
+- **In-flight entries**, which have no `version` / `merged_at` / `pr` / `commit` / `stats` until they are enriched.
+
+`/send-it` is the guarantee that new entries get `branch` / `author` / `co_authors`; validation is the safety net, not the sole guard.
+
+> **Note on timestamps:** wrap ISO 8601 timestamps in quotes (`"2026-05-23T14:55:37Z"`). Unquoted timestamps are auto-parsed by YAML into Date objects, which round-trip with millisecond noise on enrichment. Quoting keeps them as exact strings.
+
+### Categories
+
+| Category   | When to use                                     |
+| ---------- | ----------------------------------------------- |
+| `feature`  | New user-facing capability                      |
+| `fix`      | Bug fix                                         |
+| `chore`    | Tooling, build, dependency bumps                |
+| `docs`     | Documentation-only change                       |
+| `refactor` | Internal restructuring with no behaviour change |
+| `perf`     | Performance improvement                         |
+
+If `breaking: true`, the body MUST contain a `## Breaking` section first, describing the change and the migration path.
+
+## Body structure
+
+```markdown
+## Breaking <!-- only when breaking: true -->
+
+- Description and migration steps
+
+## Added
+
+- Description
+
+## Changed
+
+- ...
+
+## Fixed
+
+- ...
+```
+
+Only include `Added` / `Changed` / `Fixed` headings that have entries.
+
+## Two-phase lifecycle
+
+Because versioning is owned by Changesets and the version isn't known until release, enrichment happens in **two** passes:
+
+1. **Create or update an entry:** run `/send-it` from a feature branch. The command writes the entry with the PR-time fields (`title`, `release_note`, `created_at`, `branch`, `author`, `co_authors`, `category`, `breaking`, `issues`) and empty placeholders for the rest.
+2. **Feature-PR merge:** `.github/workflows/changelog-enrich.yml` backfills `merged_at`, `commit`, `merge_strategy`, `pr`, and overwrites `stats` (`files_changed`, `loc_added`, `loc_removed`) with authoritative values from the GitHub PR API.
+3. **Release publish:** `release.yml` stamps `version` onto every entry that doesn't yet have one, once Changesets has published the release.
+
+**CI validation:** `.github/workflows/changelog-validate.yml` runs `pnpm validate:changelog` on any PR touching `changelog/**`. Malformed entries fail the check. Run it locally with:
+
+```bash
+pnpm validate:changelog
+```
