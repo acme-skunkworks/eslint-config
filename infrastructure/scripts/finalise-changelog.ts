@@ -97,7 +97,7 @@ function realRunner(cmd: string, args: readonly string[]): string {
  * Build a PR resolver backed by `gh` + `git` (injectable runner for tests).
  */
 export function makeResolver(run: Runner): PrResolver {
-  return (branch: string): null | ResolvedPr => {
+  function resolve(branch: string): null | ResolvedPr {
     const json = run("gh", [
       "pr",
       "list",
@@ -127,8 +127,12 @@ export function makeResolver(run: Runner): PrResolver {
     const mergeSha = pr.mergeCommit?.oid ?? "";
 
     // Infer merge strategy from the merge commit shape (GitHub doesn't expose
-    // it directly): 2+ parents -> merge; 1 parent & SHA == head -> rebase;
-    // 1 parent & SHA != head -> squash.
+    // it directly): 2+ parents -> merge; otherwise squash.
+    // NOTE: rebase merges are also reported as "squash" — GitHub replays them
+    // with fresh SHAs, so mergeCommit.oid never equals headRefOid and the
+    // "rebase" branch below is effectively unreachable. This repo squash-merges
+    // anyway, and merge_strategy is only record-keeping metadata, so the
+    // imprecision is harmless.
     let mergeStrategy: null | string = null;
     if (mergeSha) {
       const parents = (
@@ -150,6 +154,20 @@ export function makeResolver(run: Runner): PrResolver {
       mergeStrategy,
       prNumber: String(pr.number ?? ""),
     };
+  }
+
+  return (branch: string): null | ResolvedPr => {
+    // Enrichment is best-effort metadata: a gh/git failure here must NOT abort
+    // `changeset version` and block the release. On any error, warn and return
+    // null — the entry still gets version-stamped, just without PR metadata.
+    try {
+      return resolve(branch);
+    } catch (error) {
+      console.warn(
+        `⚠️  Could not resolve PR for branch ${branch}: ${(error as Error).message}`,
+      );
+      return null;
+    }
   };
 }
 

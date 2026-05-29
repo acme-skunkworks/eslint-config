@@ -59,12 +59,14 @@ describe("enrichFrontmatter", () => {
       ...BASE,
       mergeSha: "9999999",
       mergedAt: "2099-01-01T00:00:00Z",
+      mergeStrategy: "rebase",
       prNumber: "999",
     });
     const { data } = matter(second);
     expect(data.merged_at).toBe("2026-05-24T09:00:00Z");
     expect(data.commit).toBe("abc1234");
     expect(data.pr).toBe(42);
+    expect(data.merge_strategy).toBe("squash");
   });
 
   it("re-running still overwrites stats authoritatively", () => {

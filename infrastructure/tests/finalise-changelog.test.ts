@@ -150,4 +150,11 @@ describe("makeResolver", () => {
     const { run } = makeRunner({ "gh pr list": () => "[]" });
     expect(makeResolver(run)("missing")).toBeNull();
   });
+
+  it("returns null (does not throw) when gh fails, so the release isn't blocked", () => {
+    const run: Runner = () => {
+      throw new Error("gh: API rate limit exceeded");
+    };
+    expect(makeResolver(run)("any-branch")).toBeNull();
+  });
 });

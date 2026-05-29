@@ -88,6 +88,51 @@ describe("validateEntry", () => {
     ]);
   });
 
+  it("rejects a non-UTC merged_at", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: false\nmerged_at: "2026-05-24"',
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([
+      expect.stringMatching(/merged_at must be ISO 8601 UTC/),
+    ]);
+  });
+
+  it("rejects a non-integer pr", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: false\npr: "twelve"',
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([
+      expect.stringMatching(/pr must be an integer/),
+    ]);
+  });
+
+  it("rejects a commit that isn't a 7-char hex SHA", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: false\ncommit: "abc"',
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([
+      expect.stringMatching(/commit must be a 7-char hex SHA/),
+    ]);
+  });
+
+  it("rejects an empty author when present", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: false\nauthor: ""',
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([
+      expect.stringMatching(/author must be a non-empty string/),
+    ]);
+  });
+
+  it("rejects an invalid merge_strategy", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: false\nmerge_strategy: "fast-forward"',
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([
+      expect.stringMatching(/merge_strategy must be one of/),
+    ]);
+  });
+
   it("rejects an unknown category", () => {
     const raw = entry(
       'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: nope\nbreaking: false',

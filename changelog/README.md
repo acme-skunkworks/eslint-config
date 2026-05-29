@@ -18,23 +18,23 @@ changelog/YYYYMMDD-HHMMSS-<slug>.md
 ```yaml
 ---
 title: "Concise summary of the change"
-release_note: "One-sentence user-facing summary" # nullable
-version: "1.0.3" # semver; filled at release time
+release_note: "One-sentence user-facing summary" # optional; string or null
+version: "1.0.3" # semver; filled at release
 created_at: "2026-05-23T14:55:37Z" # set once; never overwritten
-merged_at: # filled by the enrich workflow
-branch: "asw-123-feature-slug" # stable lookup key for enrichment
-pr: # filled when known
-commit: # 7-char merge SHA; filled by enrichment
-merge_strategy: # squash | merge | rebase; filled by enrichment
+merged_at: # filled at release (finalisation)
+branch: "asw-123-feature-slug" # stable lookup key for finalisation
+pr: # filled at release
+commit: # 7-char merge SHA; filled at release
+merge_strategy: # squash | merge | rebase; filled at release
 author: "you@example.com"
 co_authors: []
 category: feature # feature | fix | chore | docs | refactor | perf
 breaking: false
 issues: ["ASW-123"] # Linear issue IDs
-stats: # filled by the enrich workflow
-  files_changed:
-  loc_added:
-  loc_removed:
+stats: # filled at release (finalisation)
+  files_changed: # integer
+  loc_added: # integer
+  loc_removed: # integer
 ---
 ```
 
