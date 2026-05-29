@@ -1,13 +1,16 @@
 {
   "name": "@acme-skunkworks/eslint-config",
   "version": "1.0.3",
-  "description": "Shared ESLint configuration with TypeScript and React support",
+  "description": "Shared ESLint flat-config preset with TypeScript, React, Astro, Sanity, and Storybook support",
   "keywords": [
     "eslint",
     "eslint-config",
     "linting",
     "typescript",
+    "react",
     "astro",
+    "sanity",
+    "storybook",
     "code-quality"
   ],
   "homepage": "https://github.com/acme-skunkworks/eslint-config#readme",
