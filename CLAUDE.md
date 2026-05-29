@@ -113,13 +113,14 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 Today's scripts:
 
-| File                            | Replaces                   | Tests                                                                                                                 |
-| ------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `scripts/retitle-release-pr.ts` | `release.yml` retitle step | `tests/retitle-release-pr.test.ts` (vitest, fake runner)                                                              |
-| `scripts/ensure-yamllint.sh`    | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
-| `scripts/ensure-actionlint.sh`  | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
-| `scripts/ensure-bats.sh`        | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
-| `send-it/derive-changeset.ts`   | (used by `/send-it`)       | `tests/derive-changeset.test.ts` (vitest — slug, bump, body)                                                          |
+| File                                    | Replaces                                   | Tests                                                                                                                 |
+| --------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `scripts/retitle-release-pr.ts`         | `release.yml` retitle step                 | `tests/retitle-release-pr.test.ts` (vitest, fake runner)                                                              |
+| `scripts/publish-to-github-packages.sh` | `release.yml` GitHub Packages publish step | `tests/publish-to-github-packages.bats` (already-published skip / not-published publishes)                            |
+| `scripts/ensure-yamllint.sh`            | `ci.yml` yamllint step                     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
+| `scripts/ensure-actionlint.sh`          | `ci.yml` actionlint step                   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
+| `scripts/ensure-bats.sh`                | `ci.yml` bats install step                 | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
+| `send-it/derive-changeset.ts`           | (used by `/send-it`)                       | `tests/derive-changeset.test.ts` (vitest — slug, bump, body)                                                          |
 
 CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
 
@@ -167,6 +168,8 @@ Once the package exists on npm AND its Trusted Publisher is configured against t
 - Even with PATH correct, `pnpm changeset publish` itself fails — pnpm's own publish HTTP/OIDC implementation inside `@changesets/cli` doesn't satisfy what npm Trusted Publishing expects (the symptom is a generic 404 instead of npm 11.x's TP-aware error). The wrapper sidesteps this by calling npm directly. The wrapper is also idempotent: if `npm view name@version` succeeds, it exits 0 instead of re-publishing (which would 409).
 
 `changesets/action` still drives the version-PR side normally — only the publish phase is bypassed.
+
+**GitHub Packages publishes via its own idempotent script, not the changesets `published` gate.** The npm-side bypass above breaks `steps.changesets.outputs.published`: the raw-npm wrapper's stdout doesn't match the changesets `🦋  info Published` pattern, so the action reports `published=false` even on a successful publish. The GitHub Packages steps used to gate on that output and therefore _never ran_ (ASW-307). They're now ungated: after `setup-node` (GitHub Packages) writes the scoped `.npmrc`, `bash infrastructure/scripts/publish-to-github-packages.sh` does an idempotent `npm publish --access public` (no `--provenance` — token auth, not OIDC). A failed npm step aborts the job first, so this leg still only ships a version npm accepted, and it self-heals if a registry falls behind.
 
 Don't reintroduce `NPM_TOKEN` **as a CI secret** unless OIDC is verified broken. The local `.env`-based `NPM_TOKEN` is a different concern — it's for laptop-driven publishes only, never CI.
 
