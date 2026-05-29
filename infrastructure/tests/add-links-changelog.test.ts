@@ -31,6 +31,19 @@ describe("rewriteBody", () => {
   it("does not match unknown team keys", () => {
     expect(rewriteBody("See ZZZ-1.")).toBe("See ZZZ-1.");
   });
+
+  it("leaves literal text that looks like a mask token untouched", () => {
+    // Pre-sentinel, the restore pass would have mangled bare "FENCE0"/"LINK0".
+    expect(rewriteBody("Set placeholder FENCE0 and LINK0 in the doc.")).toBe(
+      "Set placeholder FENCE0 and LINK0 in the doc.",
+    );
+  });
+
+  it("links an ID even when a mask-token-like string is also present", () => {
+    expect(rewriteBody("FENCE0 — closes ASW-9.")).toBe(
+      "FENCE0 — closes [ASW-9](https://linear.app/acme-skunkworks/issue/ASW-9).",
+    );
+  });
 });
 
 describe("splitFrontmatter", () => {

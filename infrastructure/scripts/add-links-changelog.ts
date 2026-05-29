@@ -12,6 +12,11 @@ const ISSUE_RE = new RegExp(`\\b(?:${TEAM_KEYS.join("|")})-\\d+\\b`, "g");
 const FENCE_RE = /```[\s\S]*?```/g;
 const INLINE_CODE_RE = /`[^`]*`/g;
 const ALREADY_LINKED_RE = /\[[^\]]*\]\([^)]*\)/g;
+// Private-Use-Area sentinel wrapping each masked span, so a placeholder can
+// never collide with literal body text (e.g. a code sample containing the
+// string "FENCE0"). U+E000 cannot appear in a markdown source file.
+const SENTINEL = "\u{E000}";
+const PLACEHOLDER_RE = /\u{E000}(?:FENCE|INLINE|LINK)(\d+)\u{E000}/gu;
 
 function buildUrl(id: string): string {
   return `https://linear.app/${WORKSPACE}/issue/${id}`;
@@ -25,21 +30,17 @@ export function rewriteBody(body: string): string {
   function mask(label: string) {
     return (matched: string): string => {
       masks.push(matched);
-      return `${label}${masks.length - 1}`;
+      return `${SENTINEL}${label}${masks.length - 1}${SENTINEL}`;
     };
   }
 
-  let masked = body
+  const masked = body
     .replaceAll(FENCE_RE, mask("FENCE"))
     .replaceAll(INLINE_CODE_RE, mask("INLINE"))
-    .replaceAll(ALREADY_LINKED_RE, mask("LINK"));
+    .replaceAll(ALREADY_LINKED_RE, mask("LINK"))
+    .replaceAll(ISSUE_RE, (id) => `[${id}](${buildUrl(id)})`);
 
-  masked = masked.replaceAll(ISSUE_RE, (id) => `[${id}](${buildUrl(id)})`);
-
-  return masked
-    .replaceAll(/FENCE(\d+)/g, (_, index) => masks[Number(index)])
-    .replaceAll(/INLINE(\d+)/g, (_, index) => masks[Number(index)])
-    .replaceAll(/LINK(\d+)/g, (_, index) => masks[Number(index)]);
+  return masked.replaceAll(PLACEHOLDER_RE, (_, index) => masks[Number(index)]);
 }
 
 /**
