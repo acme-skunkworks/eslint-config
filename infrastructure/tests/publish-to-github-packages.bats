@@ -28,16 +28,19 @@ EOF
 }
 
 write_fake_npm() {
-  # write_fake_npm <view-exit-code> [publish-exit-code]
-  # `npm view` exits with the first code; `npm publish` exits with the second
-  # (default 0). Both record their full argv to $CALLS_LOG.
+  # write_fake_npm <view-exit-code> [publish-exit-code] [view-stderr]
+  # `npm view` prints <view-stderr> (default: a 404 marker) to stderr and exits
+  # <view-exit-code>; `npm publish` exits <publish-exit-code> (default 0). Both
+  # record their full argv to $CALLS_LOG.
   local view_exit_code=$1
   local publish_exit_code=${2:-0}
+  local view_stderr=${3:-'npm error code E404
+npm error 404 Not Found - GET https://npm.pkg.github.com/@test%2fpkg'}
   cat > "$FAKE_BIN/npm" <<EOF
 #!/usr/bin/env bash
 echo "npm \$*" >> "$CALLS_LOG"
 case "\$1" in
-  view) exit ${view_exit_code} ;;
+  view) printf '%s\n' "${view_stderr}" >&2; exit ${view_exit_code} ;;
   publish) exit ${publish_exit_code} ;;
   *) exit 0 ;;
 esac
@@ -72,6 +75,17 @@ EOF
   run bash "$SCRIPT_DIR/publish-to-github-packages.sh"
   [ "$status" -ne 0 ]
   grep -q "^npm publish --access public --registry https://npm.pkg.github.com$" "$CALLS_LOG"
+}
+
+@test "non-404 view error: script aborts without publishing" {
+  write_fake_npm 1 0 'npm error code E500
+npm error 500 Internal Server Error'
+
+  run bash "$SCRIPT_DIR/publish-to-github-packages.sh"
+  [ "$status" -ne 0 ]
+  ! grep -q "^npm publish" "$CALLS_LOG"
+  echo "$output" | grep -q "is not a 404"
+  echo "$output" | grep -q "@test/pkg@1.0.0"
 }
 
 @test "missing NODE_AUTH_TOKEN: script fails fast with documented error" {

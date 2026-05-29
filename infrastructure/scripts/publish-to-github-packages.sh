@@ -36,9 +36,26 @@ VERSION=$(node -p "require('./package.json').version")
 # .npmrc: a misconfigured scope would silently send `npm view` to public npm —
 # where the version exists — so the skip path would fire forever and GitHub
 # Packages would go permanently stale. ASW-307 review.
-if npm view "$NAME@$VERSION" version --registry "$GITHUB_PACKAGES_REGISTRY_URL" >/dev/null 2>&1; then
+#
+# Capture the probe's exit code and output so we can tell "this version isn't
+# published yet" (a 404 — safe to publish) apart from a transient or auth
+# failure. Treating every non-zero exit as "not published" would turn a
+# registry blip or a bad token into a spurious publish attempt rather than a
+# clear, actionable error.
+set +e
+view_output=$(npm view "$NAME@$VERSION" version --registry "$GITHUB_PACKAGES_REGISTRY_URL" 2>&1)
+view_status=$?
+set -e
+
+if [ "$view_status" -eq 0 ]; then
   echo "Already published to GitHub Packages: $NAME@$VERSION — skipping."
   exit 0
+fi
+
+if ! printf '%s' "$view_output" | grep -qiE 'E404|404|not found'; then
+  echo "npm view failed for $NAME@$VERSION (exit $view_status) and the error is not a 404 — aborting:" >&2
+  printf '%s\n' "$view_output" >&2
+  exit 1
 fi
 
 echo "Publishing $NAME@$VERSION to GitHub Packages..."
