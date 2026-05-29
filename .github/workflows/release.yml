@@ -22,6 +22,7 @@ jobs:
       pull-requests: write # Open the Version Packages PR
       packages: write # Publish to GitHub Packages
       id-token: write # OIDC for npm Trusted Publishing + provenance attestation
+      issues: write # Open a tracking issue if the release fails (notify step)
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -121,3 +122,39 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PACKAGES_REGISTRY_URL: ${{ steps.repo.outputs.github_packages_registry_url }}
         run: bash infrastructure/scripts/publish-to-github-packages.sh
+
+      # Fires only if a step above failed. A release runs post-merge on `main`
+      # with nobody watching a PR, so a failed publish would otherwise be
+      # silent — this opens (or comments on) a tracking issue with a runbook.
+      # Note: this covers run FAILURES only. release.yml is push/dispatch-
+      # triggered, so unlike the scheduled orchestrator it is never silently
+      # disabled by GitHub's 60-day inactivity rule.
+      - name: 🚨 Notify on release failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="🚨 Release workflow failed"
+          body=$(printf '%s\n' \
+            "The Release workflow failed on \`main\`." \
+            "" \
+            "- Run: $RUN_URL" \
+            "" \
+            "## Likely cause & fix" \
+            "- **Build / version step** — see the failing step in the run log." \
+            "- **npm publish (OIDC)** — Trusted Publishing hiccup, or the version is already published. The publish wrapper is idempotent, so a re-run usually clears a transient failure." \
+            "- **GitHub Packages publish** — token/registry issue; also idempotent on re-run." \
+            "" \
+            "Re-run from the Actions tab once resolved. This issue auto-comments on repeat failures instead of opening duplicates."
+          )
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "$title in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Appending to existing failure issue #$existing."
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            echo "Opening a new failure issue."
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
