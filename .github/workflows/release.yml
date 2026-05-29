@@ -85,11 +85,18 @@ jobs:
           # debug step). The wrapper script calls `npm publish` directly
           # via $PNPM_HOME/npm and is idempotent. ASW-174.
           publish: bash infrastructure/scripts/publish-via-raw-npm.sh
+          # Run `changeset version` then finalise the dated changelog entries
+          # (enrich from the merged PRs + stamp the bumped version + link Linear
+          # IDs). The action commits the changelog edits into the version PR, so
+          # finalisation needs no separate workflow or push to main (ASW-317).
+          version: pnpm run changeset:version
           commit: "release: version packages"
           title: "release: version packages"
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # gh (used by changeset:version to resolve merged PRs) reads GH_TOKEN.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No NPM_TOKEN — Trusted Publishing via OIDC.
           # Provenance is enabled in package.json's publishConfig.
           HUSKY: 0
@@ -122,29 +129,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PACKAGES_REGISTRY_URL: ${{ steps.repo.outputs.github_packages_registry_url }}
         run: bash infrastructure/scripts/publish-to-github-packages.sh
-
-      # Phase 3 of the changelog lifecycle (see changelog/README.md): stamp the
-      # just-published version onto every entry that doesn't have one yet. Gated
-      # to the publish path — when pullRequestNumber is non-empty the action only
-      # opened/updated the version PR (no publish), so entries aren't released
-      # yet and must keep their empty `version`. The stamp script is idempotent.
-      # Pushed with GITHUB_TOKEN (ASW-312); needs github-actions[bot] as a main
-      # ruleset bypass actor. GITHUB_TOKEN pushes don't re-trigger this workflow.
-      - name: 🏷️ Stamp release version onto changelog entries
-        if: steps.changesets.outputs.pullRequestNumber == ''
-        run: |
-          set -eo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          pnpm stamp:changelog:version
-          if git diff --quiet changelog/; then
-            echo "No changelog entries needed stamping."
-            exit 0
-          fi
-          VERSION=$(node -p "require('./package.json').version")
-          git add changelog/
-          git commit -m "docs(changelog): stamp version ${VERSION}"
-          git push
 
       # Fires only if a step above failed. A release runs post-merge on `main`
       # with nobody watching a PR, so a failed publish would otherwise be

@@ -1,21 +1,14 @@
-#!/usr/bin/env -S npx tsx
-// Post-merge enrichment of a changelog entry: backfills the fields that are
-// only knowable once the feature PR has merged.
+// Pure enrichment of a changelog entry's frontmatter — fills the fields that
+// are only knowable once the PR has merged (merged_at / commit / merge_strategy
+// / pr) plus authoritative stats. `version` is filled separately by
+// stamp-changelog-version. created_at is never touched.
 //
-// Ported from octavo's scripts/enrich-changelog.mjs and adapted for this repo:
-// `derivePackagesFromPaths` / `affected_packages` are dropped (single package).
-// `version` is NOT filled here — it's only known at release time, stamped by
-// stamp-changelog-version.ts.
-//
-// Inputs arrive via env (see EnrichInput). The pure `enrichFrontmatter(raw,
-// input)` returns the rewritten markdown so it's unit-testable; main() does the
-// directory lookup (by `branch`) and file write.
+// This is a library module (no CLI): the release-time orchestrator
+// finalise-changelog.ts composes it with the PR data it resolves from `gh`.
+// Ported from octavo's enrich-changelog.mjs, minus affected_packages (single
+// package). Kept pure so it's trivially unit-testable.
 
 import matter from "gray-matter";
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-
-export const CHANGELOG_DIR = "changelog";
 
 export type EnrichInput = {
   additions?: null | string;
@@ -97,71 +90,4 @@ export function enrichFrontmatter(raw: string, input: EnrichInput): string {
   fm.stats = stats;
 
   return matter.stringify(parsed.content, fm);
-}
-
-/**
- * Read env into an EnrichInput, exiting if a required var is missing.
- */
-function readInput(
-  environment: Record<string, string | undefined>,
-): EnrichInput {
-  function required(name: string): string {
-    const value = environment[name];
-    if (!value || value.trim() === "") {
-      console.error(`enrich: missing required env var ${name}`);
-      process.exit(2);
-    }
-
-    return value.trim();
-  }
-
-  function optional(name: string): null | string {
-    const value = environment[name];
-    return value && value.trim() !== "" ? value.trim() : null;
-  }
-
-  return {
-    additions: optional("ADDITIONS"),
-    branch: required("BRANCH_NAME"),
-    changedFiles: optional("CHANGED_FILES"),
-    deletions: optional("DELETIONS"),
-    mergedAt: required("MERGED_AT"),
-    mergeSha: required("MERGE_SHA"),
-    mergeStrategy: optional("MERGE_STRATEGY"),
-    prNumber: optional("PR_NUMBER"),
-  };
-}
-
-function findEntryByBranch(directory: string, branch: string): null | string {
-  const files = readdirSync(directory)
-    .filter((name) => name.endsWith(".md") && name !== "README.md")
-    .map((name) => join(directory, name));
-  for (const file of files) {
-    const { data } = matter(readFileSync(file, "utf8"));
-    if ((data as Record<string, unknown>)?.branch === branch) {
-      return file;
-    }
-  }
-
-  return null;
-}
-
-function main(): void {
-  const input = readInput(process.env);
-  const file = findEntryByBranch(CHANGELOG_DIR, input.branch);
-  if (!file) {
-    console.log(
-      `No changelog entry found for branch '${input.branch}'. Nothing to enrich.`,
-    );
-    return;
-  }
-
-  console.log(`Enriching: ${file}`);
-  const output = enrichFrontmatter(readFileSync(file, "utf8"), input);
-  writeFileSync(file, output);
-  console.log(`Wrote enriched frontmatter to ${file}`);
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
 }

@@ -159,7 +159,7 @@ Versioning lives in [Changesets](https://github.com/changesets/changesets). `/se
 
 > **Same gate as the changeset.** Write a `changelog/` entry **only when Step 5 wrote a changeset** (the branch touches a shippable path per Step 5.4). Skip it whenever the changeset was skipped — the dated changelog mirrors the published-change surface, not every PR, so each entry stays tied to a version bump. If Step 5 was skipped, skip this step too.
 
-The `changelog/` directory holds one dated Markdown file per shippable change — a browsable, per-change companion to the root `CHANGELOG.md`. Full schema in `changelog/README.md`. `/send-it` writes the PR-time fields; the `changelog-enrich` workflow backfills `merged_at`/`commit`/`pr`/`merge_strategy`/`stats` on merge, and `release.yml` stamps `version` at publish.
+The `changelog/` directory holds one dated Markdown file per shippable change — a browsable, per-change companion to the root `CHANGELOG.md`. Full schema in `changelog/README.md`. `/send-it` writes the PR-time fields; the Changesets **version PR** finalises the entry at release — enriching `merged_at`/`commit`/`pr`/`merge_strategy`/`stats` from the merged PR and stamping `version` (via `changeset:version` → `finalise-changelog.ts`). No separate workflow or push to `main` is involved.
 
 1. **Filename + timestamps.** `changelog/<YYYYMMDD-HHMMSS>-<slug>.md`, where `<slug>` is the same slug from Step 5.1 and the timestamp is UTC now:
 
@@ -281,7 +281,7 @@ $ARGUMENTS
 
 - **Trunk-based:** PRs target `main`.
 - **Idempotent:** running `/send-it` again updates the existing changeset and PR.
-- **`/send-it` does not bump versions or write the root `CHANGELOG.md`.** The `changesets/action` workflow on `main` handles version bumps, root-CHANGELOG generation, npm publish, and release tagging. `/send-it` _does_ write a dated `changelog/<ts>-<slug>.md` entry (Step 5b) — the per-change companion — which is later enriched on merge and version-stamped at release.
+- **`/send-it` does not bump versions or write the root `CHANGELOG.md`.** The `changesets/action` workflow on `main` handles version bumps, root-CHANGELOG generation, npm publish, and release tagging. `/send-it` _does_ write a dated `changelog/<ts>-<slug>.md` entry (Step 5b) — the per-change companion — which is finalised (enriched + version-stamped) inside the Changesets version PR at release.
 - **Single-package repo.** Changeset frontmatter always names `@acme-skunkworks/eslint-config`. If this repo ever splits into multiple packages, the derive script needs an updated affected-package detector.
 - **Linear `In Review` writeback** runs after PR creation/update. Linked issues in Triage/Backlog/Todo/In Progress are transitioned; already-In-Review and Done/Canceled/Duplicate are skipped. Re-runs are idempotent.
 
