@@ -149,8 +149,12 @@ jobs:
             "" \
             "Re-run from the Actions tab once resolved. This issue auto-comments on repeat failures instead of opening duplicates."
           )
+          # Search on the text portion only — GitHub's full-text search
+          # indexes emoji unreliably, so matching on the 🚨 risks missing the
+          # existing issue and opening a duplicate on every failure. The emoji
+          # still appears in the created title below.
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
-            --search "$title in:title" --json number --jq '.[0].number // empty')
+            --search "Release workflow failed in:title" --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
             echo "Appending to existing failure issue #$existing."
             gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
