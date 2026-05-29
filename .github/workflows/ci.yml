@@ -56,6 +56,12 @@ jobs:
       - name: 📝 Lint Markdown
         run: pnpm run lint:md
 
+      # In build-and-lint (not infra) so it also runs on the changeset-release/*
+      # version PR, where finalise-changelog.ts rewrites the entries — that's
+      # exactly where finalised frontmatter/body must be validated before merge.
+      - name: 📓 Validate changelog entries
+        run: pnpm validate:changelog
+
       - name: 📝 Changeset status
         run: pnpm changeset status --since=origin/${{ github.base_ref }}
         continue-on-error: true
@@ -154,6 +160,3 @@ jobs:
 
       - name: 🧪 Bats
         run: pnpm test:sh
-
-      - name: 📓 Validate changelog entries
-        run: pnpm validate:changelog

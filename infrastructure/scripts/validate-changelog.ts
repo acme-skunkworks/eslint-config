@@ -22,7 +22,10 @@ export const CHANGELOG_DIR = "changelog";
 
 const FILENAME_RE = /^(\d{8})-(\d{6})-([a-z0-9-]+)\.md$/;
 const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
-const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[\w.]+)?(?:\+[\w.]+)?$/;
+// SemVer 2.0.0: prerelease and build identifiers are dot-separated and may
+// contain ASCII alphanumerics and hyphens (e.g. 1.2.3-rc-1, 1.2.3+build-45).
+const SEMVER_RE =
+  /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const SHA7_RE = /^[0-9a-f]{7}$/;
 const ISSUE_RE = /^[A-Z]{2,}-\d+$/;
 const CATEGORIES = new Set([
@@ -35,7 +38,6 @@ const CATEGORIES = new Set([
 ]);
 const MERGE_STRATEGIES = new Set(["merge", "rebase", "squash"]);
 const SECTION_RE = /^##\s+(Breaking|Added|Changed|Fixed)\b/m;
-const BREAKING_RE = /^##\s+Breaking\b/m;
 
 const REQUIRED = ["title", "created_at", "category", "breaking"] as const;
 
@@ -215,8 +217,13 @@ export function validateEntry(name: string, raw: string): string[] {
     }
   }
 
-  if (fm.breaking === true && !BREAKING_RE.test(body)) {
-    fail('breaking: true requires a "## Breaking" section in the body');
+  // The schema (changelog/README.md) requires "## Breaking" to be the FIRST
+  // body section when breaking: true — not merely present somewhere.
+  if (fm.breaking === true) {
+    const firstSection = body.match(/^##\s+([A-Za-z]+)\b/m)?.[1];
+    if (firstSection !== "Breaking") {
+      fail('breaking: true requires "## Breaking" as the first body section');
+    }
   }
 
   if (!SECTION_RE.test(body)) {

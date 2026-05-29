@@ -90,6 +90,10 @@ function realRunner(cmd: string, args: readonly string[]): string {
   return execFileSync(cmd, args, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "inherit"],
+    // Fail fast if gh/git stalls (network/auth). Enrichment is best-effort, so
+    // a timeout throws → makeResolver's try/catch falls back to null rather
+    // than hanging the release until the whole job times out.
+    timeout: 30_000,
   });
 }
 

@@ -148,8 +148,33 @@ describe("validateEntry", () => {
       "## Changed\n\n- Something\n",
     );
     expect(validateEntry(VALID_NAME, raw)).toEqual([
-      expect.stringMatching(/breaking: true requires a "## Breaking" section/),
+      expect.stringMatching(/"## Breaking" as the first body section/),
     ]);
+  });
+
+  it("rejects breaking: true when ## Breaking is not the first section", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: true',
+      "## Added\n\n- New\n\n## Breaking\n\n- Migrate\n",
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([
+      expect.stringMatching(/"## Breaking" as the first body section/),
+    ]);
+  });
+
+  it("accepts breaking: true when ## Breaking is the first section", () => {
+    const raw = entry(
+      'title: "x"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: true',
+      "## Breaking\n\n- Migrate\n\n## Changed\n\n- Other\n",
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([]);
+  });
+
+  it("accepts a SemVer version with hyphenated prerelease/build identifiers", () => {
+    const raw = entry(
+      'title: "x"\nversion: "1.2.3-rc-1+build-45"\ncreated_at: "2026-05-23T14:55:37Z"\ncategory: fix\nbreaking: false',
+    );
+    expect(validateEntry(VALID_NAME, raw)).toEqual([]);
   });
 
   it("requires at least one body section", () => {
