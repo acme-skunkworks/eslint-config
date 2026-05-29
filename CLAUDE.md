@@ -130,8 +130,15 @@ Today's scripts:
 | `scripts/ensure-actionlint.sh`          | `ci.yml` actionlint step                   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
 | `scripts/ensure-bats.sh`                | `ci.yml` bats install step                 | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
 | `send-it/derive-changeset.ts`           | (used by `/send-it`)                       | `tests/derive-changeset.test.ts` (vitest — slug, bump, body)                                                          |
+| `scripts/validate-changelog.ts`         | `ci.yml` infra job `validate:changelog`    | `tests/validate-changelog.test.ts` (vitest — schema accept/reject cases)                                              |
+| `scripts/finalise-changelog.ts`         | `release.yml` `changeset:version` command  | `tests/finalise-changelog.test.ts` (vitest — finalise + gh/git resolver via fake runner)                              |
+| `scripts/enrich-changelog.ts`           | (pure lib used by finalise)                | `tests/enrich-changelog.test.ts` (vitest — fill-once, stats overwrite, idempotency)                                   |
+| `scripts/add-links-changelog.ts`        | (pure lib used by finalise)                | `tests/add-links-changelog.test.ts` (vitest — masking code/links, ASW/AKW IDs)                                        |
+| `scripts/stamp-changelog-version.ts`    | (pure lib used by finalise)                | `tests/stamp-changelog-version.test.ts` (vitest — stamp-once, absent-field)                                           |
 
-CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
+CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh`, and `pnpm validate:changelog` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
+
+> The changelog scripts use `gray-matter` (a devDependency) and the validator is a long flat list of schema checks, so `eslint.config.ts` scopes a `devDependencies: true` + `complexity: off` override to `infrastructure/**`.
 
 When adding workflow-extracted tooling, write the test first, then wire from YAML as a one-liner: `run: pnpm tsx infrastructure/scripts/<name>.ts` or `run: bash infrastructure/scripts/<name>.sh`. Slash-command-only helpers under `infrastructure/send-it/` are invoked from `.claude/commands/send-it.md` instead.
 
@@ -158,6 +165,19 @@ The package is a flat-config preset composer. Source is TypeScript; consumers im
 - `frameworkRouting` — turns off `canonical/filename-match-exported` for `routes/`, `app/`, `pages/`, etc.; re-allows arrow functions on `root.tsx` / `*.route.tsx`.
 - `testing` — relaxes strict TS rules and `import/no-extraneous-dependencies` for test files.
 - Opt-in (not in the default composition): `astro`, `sanity`, `storybook`, `complexity` (raises cyclomatic threshold for `**/scripts/**`), `e2e` (Playwright `test.extend` false-positive workaround), `tableComponents` (TanStack Table cell-renderer false positive).
+
+## Dated changelog (`changelog/`)
+
+Alongside the Changesets-generated root `CHANGELOG.md`, the repo keeps **one dated Markdown file per shippable change** under `changelog/` — a browsable, per-change, machine-readable record (the pattern is borrowed from the `octavo` repo, adapted for a single semver'd npm package: a `version` field is added, `affected_packages` dropped). Full schema and lifecycle in **`changelog/README.md`**.
+
+Two-stage lifecycle — and crucially **no bot or push to `main`**: finalisation rides inside the Changesets version PR (ASW-317).
+
+1. **PR-time** — `/send-it` Step 5b writes `changelog/<YYYYMMDD-HHMMSS>-<slug>.md` with the PR-time fields (and empty enrichment placeholders), **gated identically to the changeset** (only for shippable changes per Step 5.4), so every entry maps to a version bump. The entry merges to `main` with its feature PR and sits with placeholders until release.
+2. **Release (in the version PR)** — `changesets/action`'s `version:` input is `pnpm run changeset:version`, which runs `changeset version` then `finalise-changelog.ts`. For every entry without a `version`, finalise resolves its merged PR from the `branch` field via `gh` (filling `merged_at`/`commit`/`pr`/`merge_strategy`/`stats`), stamps the just-bumped `version`, and rewrites Linear IDs to links. The action commits those changelog edits **into the "release: version packages" PR** — so they merge and publish through the normal flow with the action's own token. Idempotent and re-run-safe (it always starts from the placeholder entries on `main`).
+
+`validate:changelog` enforces the schema (CI: the `infra` job). Required frontmatter is relaxed to `title`/`created_at`/`category`/`breaking` so backfilled historical entries (no branch/author/stats) and in-flight entries (no version/stats yet) both pass.
+
+`finalise-changelog.ts` is the only CLI; `enrich-changelog.ts`, `add-links-changelog.ts`, and `stamp-changelog-version.ts` are pure library modules it composes.
 
 ## Release workflow
 

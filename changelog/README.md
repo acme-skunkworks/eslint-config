@@ -18,23 +18,23 @@ changelog/YYYYMMDD-HHMMSS-<slug>.md
 ```yaml
 ---
 title: "Concise summary of the change"
-release_note: "One-sentence user-facing summary" # nullable
-version: "1.0.3" # semver; filled at release time
+release_note: "One-sentence user-facing summary" # optional; string or null
+version: "1.0.3" # semver; filled at release
 created_at: "2026-05-23T14:55:37Z" # set once; never overwritten
-merged_at: # filled by the enrich workflow
-branch: "asw-123-feature-slug" # stable lookup key for enrichment
-pr: # filled when known
-commit: # 7-char merge SHA; filled by enrichment
-merge_strategy: # squash | merge | rebase; filled by enrichment
+merged_at: # filled at release (finalisation)
+branch: "asw-123-feature-slug" # stable lookup key for finalisation
+pr: # filled at release
+commit: # 7-char merge SHA; filled at release
+merge_strategy: # squash | merge | rebase; filled at release
 author: "you@example.com"
 co_authors: []
 category: feature # feature | fix | chore | docs | refactor | perf
 breaking: false
 issues: ["ASW-123"] # Linear issue IDs
-stats: # filled by the enrich workflow
-  files_changed:
-  loc_added:
-  loc_removed:
+stats: # filled at release (finalisation)
+  files_changed: # integer
+  loc_added: # integer
+  loc_removed: # integer
 ---
 ```
 
@@ -93,15 +93,14 @@ If `breaking: true`, the body MUST contain a `## Breaking` section first, descri
 
 Only include `Added` / `Changed` / `Fixed` headings that have entries.
 
-## Two-phase lifecycle
+## Lifecycle
 
-Because versioning is owned by Changesets and the version isn't known until release, enrichment happens in **two** passes:
+Two stages — and finalisation rides inside the Changesets version PR, so there's no separate workflow and nothing pushes to `main`:
 
-1. **Create or update an entry:** run `/send-it` from a feature branch. The command writes the entry with the PR-time fields (`title`, `release_note`, `created_at`, `branch`, `author`, `co_authors`, `category`, `breaking`, `issues`) and empty placeholders for the rest.
-2. **Feature-PR merge:** `.github/workflows/changelog-enrich.yml` backfills `merged_at`, `commit`, `merge_strategy`, `pr`, and overwrites `stats` (`files_changed`, `loc_added`, `loc_removed`) with authoritative values from the GitHub PR API.
-3. **Release publish:** `release.yml` stamps `version` onto every entry that doesn't yet have one, once Changesets has published the release.
+1. **Create or update an entry (PR-time):** run `/send-it` from a feature branch. It writes the entry with the PR-time fields (`title`, `release_note`, `created_at`, `branch`, `author`, `co_authors`, `category`, `breaking`, `issues`) and empty placeholders for the rest. The entry merges to `main` with the feature PR and waits.
+2. **Finalise (at release, inside the version PR):** `changesets/action` runs `changeset version` then `finalise-changelog.ts`. For every entry without a `version`, it resolves the merged PR from the `branch` field via `gh` — filling `merged_at`, `commit`, `merge_strategy`, `pr`, and `stats` (`files_changed`, `loc_added`, `loc_removed`) — stamps the just-bumped `version`, and rewrites Linear IDs to links. The action commits these edits into the "release: version packages" PR, which publishes through the normal flow.
 
-**CI validation:** `.github/workflows/changelog-validate.yml` runs `pnpm validate:changelog` on any PR touching `changelog/**`. Malformed entries fail the check. Run it locally with:
+**CI validation:** the `infra` job in `ci.yml` runs `pnpm validate:changelog` on every PR. Malformed entries fail the check. Run it locally with:
 
 ```bash
 pnpm validate:changelog
