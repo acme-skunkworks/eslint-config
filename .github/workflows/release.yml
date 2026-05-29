@@ -117,4 +117,5 @@ jobs:
       - name: 📦 Publish to GitHub Packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PACKAGES_REGISTRY_URL: ${{ steps.repo.outputs.github_packages_registry_url }}
         run: bash infrastructure/scripts/publish-to-github-packages.sh
