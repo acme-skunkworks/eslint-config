@@ -80,6 +80,10 @@ runs:
 
           value = raw.to_s.strip
 
+          # Guard the `name=value` line format itself, ahead of the pattern
+          # check: a newline could append a second output line (output
+          # injection), and an `=` could corrupt the key/value split. None of
+          # the five mapped keys legitimately contain either, so reject both.
           if value.include?("\n") || value.include?("=")
             warn("::error title=invalid value::#{yaml_key} contains a newline or '=' — refusing to write to GITHUB_OUTPUT")
             abort

@@ -31,9 +31,30 @@ set -euo pipefail
 NAME=$(node -p "require('./package.json').name")
 VERSION=$(node -p "require('./package.json').version")
 
-if "$PNPM_HOME/npm" view "$NAME@$VERSION" version >/dev/null 2>&1; then
+# Probe whether this version already exists. Capture the exit code and output
+# so a genuine 404 ("not published yet" → publish) is told apart from a
+# transient/auth/registry failure (→ abort with a clear error before the OIDC
+# token exchange and publish, so the failure surfaces here rather than mid-
+# publish). Mirrors publish-to-github-packages.sh. ASW-326 review.
+set +e
+view_output=$("$PNPM_HOME/npm" view "$NAME@$VERSION" version 2>&1)
+view_status=$?
+set -e
+
+# Skip only on a genuine hit: exit 0 *with* output. npm can exit 0 with empty
+# output for unresolved descriptors (a dist-tag quirk), so a bare exit-0 isn't
+# proof the version exists.
+if [ "$view_status" -eq 0 ] && [ -n "$view_output" ]; then
   echo "Already published: $NAME@$VERSION — skipping."
   exit 0
+fi
+
+# Exit 0 with empty output means "not published yet" — fall through to publish.
+# Only a non-zero exit whose error isn't a 404 is a real failure to abort on.
+if [ "$view_status" -ne 0 ] && ! printf '%s' "$view_output" | grep -qiE 'E404|not found'; then
+  echo "npm view failed for $NAME@$VERSION (exit $view_status) and the error is not a 404 — aborting:" >&2
+  printf '%s\n' "$view_output" >&2
+  exit 1
 fi
 
 echo "Publishing $NAME@$VERSION from $TARBALL via $PNPM_HOME/npm..."

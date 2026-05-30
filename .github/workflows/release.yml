@@ -73,6 +73,10 @@ jobs:
           name: npm-tarball
           path: ${{ steps.pack.outputs.tarball }}
           if-no-files-found: error
+          # Tight TTL keeps the credential-adjacent artifact around only as long
+          # as a release needs it. Trade-off: re-running the release/publish jobs
+          # in isolation >24h later finds the artifact gone — re-run the whole
+          # workflow (or push again) to rebuild it.
           retention-days: 1
 
   release:
@@ -123,6 +127,9 @@ jobs:
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version-file: ${{ steps.repo.outputs.node_version_file }}
+          # This job no longer runs `pnpm install` (build does), but cache: pnpm
+          # still warms the pnpm store the next step's `pnpm add -g npm@…` pulls
+          # from. Cheap and keeps the upgrade-npm step fast.
           cache: pnpm
           registry-url: ${{ steps.repo.outputs.npm_registry_url }}
 
