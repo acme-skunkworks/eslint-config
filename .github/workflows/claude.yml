@@ -35,8 +35,11 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
-      # No id-token: write — this job publishes nothing and no OIDC consumer
-      # trusts its subject; least-privilege hygiene (ASW-329).
+      # Required: claude-code-action exchanges an OIDC token for its short-lived
+      # GitHub token (getOidcToken → setupGitHubToken). Removing it fails the run
+      # with "Could not fetch an OIDC token" — it is NOT just for publishing, so
+      # the ASW-329 least-privilege drop was reverted.
+      id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
