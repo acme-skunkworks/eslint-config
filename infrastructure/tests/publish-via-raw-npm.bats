@@ -18,7 +18,13 @@ setup() {
 { "name": "@test/pkg", "version": "1.0.0" }
 EOF
 
+  # The prebuilt tarball the workflow packs, uploads and downloads (ASW-328).
+  # Contents are irrelevant — the fake npm never reads it.
+  TARBALL_PATH="${BATS_TEST_TMPDIR}/test-pkg-1.0.0.tgz"
+  printf 'fake tarball' > "$TARBALL_PATH"
+
   export PNPM_HOME="$FAKE_PNPM_HOME"
+  export TARBALL="$TARBALL_PATH"
 }
 
 write_fake_npm() {
@@ -54,7 +60,7 @@ EOF
   run bash "$SCRIPT_DIR/publish-via-raw-npm.sh"
   [ "$status" -eq 0 ]
   grep -q "^npm view @test/pkg@1.0.0 version$" "$CALLS_LOG"
-  grep -q "^npm publish --access public --provenance$" "$CALLS_LOG"
+  grep -q "^npm publish ${TARBALL} --access public --provenance$" "$CALLS_LOG"
   echo "$output" | grep -q "Publishing @test/pkg@1.0.0"
 }
 
@@ -64,4 +70,14 @@ EOF
   run bash "$SCRIPT_DIR/publish-via-raw-npm.sh"
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "PNPM_HOME is not set"
+}
+
+@test "missing TARBALL: script fails fast with documented error" {
+  write_fake_npm 1
+  unset TARBALL
+
+  run bash "$SCRIPT_DIR/publish-via-raw-npm.sh"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "TARBALL is not set"
+  ! grep -q "^npm publish" "$CALLS_LOG"
 }
