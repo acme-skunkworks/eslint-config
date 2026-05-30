@@ -15,6 +15,14 @@ outputs:
     description: Public npm registry URL.
     value: ${{ steps.load.outputs.npm_registry_url }}
 
+  npm_scope:
+    description: npm scope for the published package (must equal the owning GitHub org for GitHub Packages).
+    value: ${{ steps.load.outputs.npm_scope }}
+
+  github_packages_registry_url:
+    description: GitHub Packages npm registry URL (secondary publish target, ASW-323).
+    value: ${{ steps.load.outputs.github_packages_registry_url }}
+
 runs:
   using: composite
   steps:
@@ -46,7 +54,9 @@ runs:
         mapping = [
           %w(default_branch defaultBranch),
           %w(node_version_file nodeVersionFile),
-          %w(npm_registry_url npmRegistryUrl)
+          %w(npm_registry_url npmRegistryUrl),
+          %w(npm_scope npmScope),
+          %w(github_packages_registry_url githubPackagesRegistryUrl)
         ]
 
         mapping.each do |(output_key, yaml_key)|

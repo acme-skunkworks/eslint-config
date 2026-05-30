@@ -17,6 +17,10 @@ jobs:
     name: 🚀 Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      # Reused by publish-github-packages so it gates on the same condition
+      # without re-detecting (false = version-PR merge = publish; true = no-op).
+      has_pending_changesets: ${{ steps.cs.outputs.has }}
     permissions:
       contents: write # Git tags + GitHub releases on publish
       id-token: write # OIDC for npm Trusted Publishing + provenance attestation
@@ -32,6 +36,10 @@ jobs:
           # pending changesets and publishes. The bot's private key never touches
           # this public repo's CI (ASW-311 / ASW-312 / ASW-320).
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Don't write GITHUB_TOKEN into .git/config — nothing here git-pushes
+          # (tags/release go via the gh API, npm via OIDC). Avoids the artipacked
+          # credential-persistence exposure.
+          persist-credentials: false
 
       - name: ⚙️ Load repo config
         id: repo
@@ -182,3 +190,84 @@ jobs:
             echo "Opening a new failure issue."
             gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
           fi
+
+  # Secondary publish target (ASW-323). A SEPARATE job so packages: write is
+  # scoped here and never granted to the main `release` job. Runs only after npm
+  # publish succeeds (needs: release) and only on a version-PR merge — the same
+  # no-pending-changesets gate, reused via the release job's output. GitHub
+  # Packages has no OIDC Trusted-Publisher flow, so this leg authenticates with
+  # the ephemeral per-job GITHUB_TOKEN; provenance is supplied out-of-band by a
+  # GitHub-native attestation over the exact tarball (npm --provenance is
+  # npmjs.org-only).
+  publish-github-packages:
+    name: 📦 Publish to GitHub Packages
+    needs: release
+    if: needs.release.outputs.has_pending_changesets == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read # Checkout only
+      packages: write # Publish to GitHub Packages
+      id-token: write # Sigstore signing for the build-provenance attestation
+      attestations: write # Upload the attestation to GitHub
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Publish/attest only — never git-pushes. Don't persist GITHUB_TOKEN in
+          # .git/config (artipacked credential-persistence exposure).
+          persist-credentials: false
+
+      - name: ⚙️ Load repo config
+        id: repo
+        uses: ./.github/actions/load-repo-config
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v4.4.0
+        with:
+          run_install: false
+
+      # GitHub Packages variant: scoped .npmrc pointing at npm.pkg.github.com.
+      # No npm-upgrade step — token auth has no npm-version floor (the 11.5.1
+      # bump on the npm leg is a Trusted-Publishing requirement that doesn't
+      # apply here).
+      - name: 🟢 Setup Node.js (GitHub Packages)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: ${{ steps.repo.outputs.node_version_file }}
+          cache: pnpm
+          registry-url: ${{ steps.repo.outputs.github_packages_registry_url }}
+          scope: ${{ steps.repo.outputs.npm_scope }}
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build
+        run: pnpm run build
+
+      # Pack once and capture the path. The attestation and the publish both act
+      # on this exact tarball, so the attested digest matches what consumers
+      # download (and can verify with `gh attestation verify <tarball>`).
+      - name: 📦 Pack tarball
+        id: pack
+        run: |
+          set -euo pipefail
+          tarball="$(npm pack --silent)"
+          {
+            echo "tarball<<EOF"
+            echo "$PWD/$tarball"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Packed $tarball"
+
+      - name: 🔏 Attest build provenance
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-path: ${{ steps.pack.outputs.tarball }}
+
+      - name: 📦 Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PACKAGES_REGISTRY_URL: ${{ steps.repo.outputs.github_packages_registry_url }}
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+        run: bash infrastructure/scripts/publish-to-github-packages.sh
