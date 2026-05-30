@@ -103,12 +103,46 @@ jobs:
           # debug step). The wrapper script calls `npm publish` directly
           # via $PNPM_HOME/npm and is idempotent. ASW-174.
           publish: bash infrastructure/scripts/publish-via-raw-npm.sh
-          createGithubReleases: true
+          # No createGithubReleases — the raw-npm wrapper makes the action
+          # report published=false (ASW-307), so it never fired. The explicit
+          # tag + GitHub release step below does it instead.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No NPM_TOKEN — Trusted Publishing via OIDC.
           # Provenance is enabled in package.json's publishConfig.
           HUSKY: 0
+
+      # changesets/action would normally tag + create the GitHub release, but it
+      # reports published=false (ASW-307) so it skips both. Do it explicitly.
+      # Idempotent: skips if the release already exists, so re-runs are safe.
+      - name: 🏷️ Tag + GitHub release
+        if: steps.cs.outputs.has == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="v${version}"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists — nothing to do."
+            exit 0
+          fi
+
+          # Extract this version's section from CHANGELOG.md (between its
+          # `## <version>` heading and the next `## ` heading) for the notes.
+          notes="$(awk -v h="## ${version}" '
+            $0==h {f=1; next}
+            /^## / && f {exit}
+            f {print}
+          ' CHANGELOG.md)"
+          [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ] && notes="See CHANGELOG.md."
+
+          gh release create "$tag" \
+            --title "$tag" \
+            --target "$GITHUB_SHA" \
+            --notes "$notes"
+          echo "Created $tag at $GITHUB_SHA."
 
       # Fires only if a step above failed. A release runs post-merge on `main`
       # with nobody watching a PR, so a failed publish would otherwise be
