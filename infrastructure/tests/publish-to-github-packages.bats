@@ -43,7 +43,9 @@ write_fake_npm() {
   # record their full argv to $CALLS_LOG.
   local view_exit_code=$1
   local publish_exit_code=${2:-0}
-  local view_stderr=${3:-'npm error code E404
+  # `${3-default}` (not `${3:-default}`) so an explicit empty arg stays empty —
+  # the empty-success test needs `npm view` to print nothing.
+  local view_stderr=${3-'npm error code E404
 npm error 404 Not Found - GET https://npm.pkg.github.com/@test%2fpkg'}
   cat > "$FAKE_BIN/npm" <<EOF
 #!/usr/bin/env bash
@@ -76,6 +78,19 @@ EOF
   grep -q "^npm publish ${TARBALL} --access public --registry https://npm.pkg.github.com$" "$CALLS_LOG"
   ! grep -q -- "--provenance" "$CALLS_LOG"
   echo "$output" | grep -q "Publishing @test/pkg@1.0.0 to GitHub Packages"
+}
+
+@test "empty-success: npm view exits 0 with no output, script publishes (not a skip)" {
+  # npm can exit 0 with empty output for unresolved descriptors (dist-tag
+  # quirk). That must be treated as "not published", not a false idempotent
+  # skip. write_fake_npm with empty stderr → command substitution strips the
+  # lone newline → view_output is empty.
+  write_fake_npm 0 0 ''
+
+  run bash "$SCRIPT_DIR/publish-to-github-packages.sh"
+  [ "$status" -eq 0 ]
+  grep -q "^npm publish ${TARBALL} --access public --registry https://npm.pkg.github.com$" "$CALLS_LOG"
+  ! grep -q -- "--provenance" "$CALLS_LOG"
 }
 
 @test "publish-failure: npm publish fails, script exits non-zero" {
