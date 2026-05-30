@@ -1,5 +1,11 @@
 # @acme-skunkworks/eslint-config
 
+## 1.0.4
+
+### Patch Changes
+
+- c98ca37: Correct the package description and keywords to reflect React/Sanity/Storybook support, and switch the Sanity preset's documentation comments to British English.
+
 ## 1.0.3
 
 ### Patch Changes
