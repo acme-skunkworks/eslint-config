@@ -7,16 +7,18 @@
 #     enforces PEP 668 — hence --break-system-packages — and runs as root, so
 #     ~/.local/bin is not on PATH by default).
 #
-# Cache: the GHA workflow caches ~/.local on the yamllint version key. When
-# the cache hits, `yamllint` is already on disk under ~/.local/bin, so the
-# install branch is skipped on the second run onwards.
+# Cache: the GHA workflow caches ~/.local keyed on the hash of the requirements
+# file below. When the cache hits, `yamllint` is already on disk under
+# ~/.local/bin, so the install branch is skipped on the second run onwards.
 #
 # Version + integrity are pinned in infrastructure/requirements-yamllint.txt,
 # installed with `pip install --require-hashes` so pip refuses any artefact —
 # yamllint or a transitive dep (pathspec, PyYAML) — whose sha256 isn't listed
 # there (ASW-327). A bare `pip install yamllint==X` trusts whatever PyPI serves;
 # this does not. Regenerate the requirements file when bumping the version (see
-# its header) and keep the version in sync with the ci.yml cache key.
+# its header); the ci.yml `yaml-lint` cache key is keyed on this file's hash, so
+# regenerating it busts the cache automatically — there's no separate version to
+# keep in sync.
 #
 # Confinement: this script (and the bats/actionlint bootstraps) must never be
 # added to the `release` / `publish-github-packages` jobs — they run only in
