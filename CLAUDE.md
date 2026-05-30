@@ -73,6 +73,14 @@ Two non-Node tools augment Prettier's formatting pass with the semantic checks P
 - **`actionlint` v1.7.5** — Go binary. Local install: `brew install actionlint` (macOS) or `bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/scripts/download-actionlint.bash)` elsewhere. CI downloads the official tarball and caches it.
 - **`yamllint` 1.37.1** — Python tool. Local install: `brew install yamllint` (macOS) or `pip install --user yamllint==1.37.1` elsewhere. CI installs via pip and caches `~/.local`.
 
+**Digest-pinned bootstraps (ASW-327).** The CI install scripts for these tools fetch-and-execute third-party code, so each is pinned by digest, not just a mutable tag:
+
+- `ensure-actionlint.sh` fetches `download-actionlint.bash` from the **immutable commit SHA** of the v1.7.5 tag (not the `v1.7.5` tag), passes the version explicitly so it installs that exact release, then independently re-verifies the extracted binary against a pinned sha256 (enforced on the CI arch, linux/amd64).
+- `ensure-bats.sh` verifies the downloaded release tarball against a pinned sha256 before extraction.
+- `ensure-yamllint.sh` installs via `pip install --require-hashes -r infrastructure/requirements-yamllint.txt`, so pip refuses any artefact — yamllint or a transitive dep — whose digest isn't listed. Regenerate that file when bumping (see its header). The `yaml-lint` cache key in `ci.yml` is keyed on its hash.
+
+When bumping any of these, update the version **and** the matching digest/requirements together. These scripts run only in read-scoped CI jobs (`yaml-lint`, `infra`) — they must never be added to the `release`/`publish-github-packages` jobs, which is what keeps a compromised upstream away from the publish identity.
+
 Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-length / indentation to warnings (Prettier owns formatting), allows the GitHub Actions truthy values (`on`, `off`, `yes`, `no`), and ignores `node_modules/`, `dist/`, `.turbo/`, `pnpm-lock.yaml`. No `.actionlintrc.yaml` — defaults are fine for this repo.
 
 Enforcement: pre-commit is best-effort (skip with install hint when missing); CI is the `yaml-lint` job in `ci.yml`, parallel to `build-and-lint`, always enforced. The install-and-run logic for both tools lives in `infrastructure/scripts/ensure-yamllint.sh` and `ensure-actionlint.sh`; the workflow calls those as one-liners (see `infrastructure/README.md`). Cache steps (`actions/cache@v4`) stay inline in `ci.yml` because caching is a workflow concern.
@@ -229,7 +237,13 @@ Don't reintroduce `NPM_TOKEN` **as a CI secret** unless OIDC is verified broken.
 <body>
 ```
 
-### Manual publish (CI fallback, after the package exists)
+### Manual publish (break-glass — CI-down only, after the package exists)
+
+> **This is break-glass, not a routine path (ASW-331).** Reach for it only when CI/OIDC is genuinely down — every normal release goes through `release.yml` (OIDC, no standing token). The `.env` `NPM_TOKEN` is a long-lived credential, so treat it accordingly:
+>
+> - **Store it in a secrets manager**, retrieved just-in-time into the shell — not committed to a plaintext `.env` that lingers on disk (`.env` is gitignored, but a secrets manager is the stronger control).
+> - **Shortest viable lifetime + a documented rotation cadence**; rotate immediately if a laptop is lost or the token is exposed.
+> - It never touches CI (CLAUDE.md forbids `NPM_TOKEN` as a CI secret), and manual publishes are distinguishable from CI ones (no provenance badge), so a manual release can't masquerade as a verified CI one. The only way this token leaks is full local-machine compromise.
 
 For when CI is down. Auth setup (one-time, or after rotating your token):
 

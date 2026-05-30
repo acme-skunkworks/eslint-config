@@ -3,6 +3,17 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+    # Skip the review when a PR changes ONLY the Claude workflow files.
+    # claude-code-action's app-token exchange requires the invoking workflow to
+    # match the version on the default branch, so a PR that edits these files
+    # 401s on workflow validation and can't be reviewed by the bot anyway —
+    # this avoids a spurious failing check. paths-ignore skips only when EVERY
+    # changed file matches; a PR touching these plus anything else still runs.
+    # (claude-review is not a required status check, so a path-skip won't block
+    # merges — verified against the repo rulesets.)
+    paths-ignore:
+      - ".github/workflows/claude.yml"
+      - ".github/workflows/claude-code-review.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -17,6 +28,10 @@ jobs:
       contents: read
       pull-requests: write
       issues: read
+      # Required: claude-code-action exchanges an OIDC token for its short-lived
+      # GitHub token (getOidcToken → setupGitHubToken). Removing it fails the run
+      # with "Could not fetch an OIDC token" — it is NOT just for publishing, so
+      # the ASW-329 least-privilege drop was reverted.
       id-token: write
 
     steps:
@@ -32,7 +47,11 @@ jobs:
         uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
+          # Pin the marketplace to an immutable tag (ASW-329) — the action is
+          # SHA-pinned but the plugin source would otherwise float to the
+          # default-branch HEAD at runtime. Re-pin deliberately whenever the
+          # claude-code-action SHA above is bumped.
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git#v2.1.158"
           plugins: "code-review@claude-code-plugins"
           prompt: "/code-review:code-review https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
           allowed_bots: "road-runner-bot[bot]"
