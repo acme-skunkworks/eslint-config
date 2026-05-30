@@ -19,15 +19,13 @@ Write all prose in British English — code comments, documentation, commit mess
 
 Non-secret knobs shared by `ci.yml` and `release.yml` live in **`infrastructure/repo-config.yaml`**, loaded at runtime by the composite `.github/actions/load-repo-config` (`uses: ./.github/actions/load-repo-config`).
 
-| Key                         | Purpose                                                                                                                     |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `defaultBranch`             | Canonical default branch; keep in sync with static `on:` triggers (GitHub cannot derive `on.push.branches` from this file). |
-| `nodeVersionFile`           | Passed to `actions/setup-node` `node-version-file`.                                                                         |
-| `npmScope`                  | NPM scope for GitHub Packages publishing (`setup-node` `scope`).                                                            |
-| `npmRegistryUrl`            | Public npm registry (`setup-node` when talking to npmjs).                                                                   |
-| `githubPackagesRegistryUrl` | GitHub Packages npm registry URL for the GH Packages `setup-node` step.                                                     |
+| Key               | Purpose                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `defaultBranch`   | Canonical default branch; keep in sync with static `on:` triggers (GitHub cannot derive `on.push.branches` from this file). |
+| `nodeVersionFile` | Passed to `actions/setup-node` `node-version-file`.                                                                         |
+| `npmRegistryUrl`  | Public npm registry (`setup-node` when talking to npmjs).                                                                   |
 
-Secrets (`RELEASE_PAT`, `GITHUB_TOKEN`), OIDC Trusted Publishing, and Changesets behaviour are unchanged — not in this file.
+Secrets (`GITHUB_TOKEN`), OIDC Trusted Publishing, and Changesets behaviour are unchanged — not in this file.
 
 ## Commands
 
@@ -122,19 +120,17 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 Today's scripts:
 
-| File                                    | Replaces                                   | Tests                                                                                                                 |
-| --------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `scripts/retitle-release-pr.ts`         | `release.yml` retitle step                 | `tests/retitle-release-pr.test.ts` (vitest, fake runner)                                                              |
-| `scripts/publish-to-github-packages.sh` | `release.yml` GitHub Packages publish step | `tests/publish-to-github-packages.bats` (already-published skip / not-published publishes)                            |
-| `scripts/ensure-yamllint.sh`            | `ci.yml` yamllint step                     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
-| `scripts/ensure-actionlint.sh`          | `ci.yml` actionlint step                   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
-| `scripts/ensure-bats.sh`                | `ci.yml` bats install step                 | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
-| `send-it/derive-changeset.ts`           | (used by `/send-it`)                       | `tests/derive-changeset.test.ts` (vitest — slug, bump, body)                                                          |
-| `scripts/validate-changelog.ts`         | `ci.yml` infra job `validate:changelog`    | `tests/validate-changelog.test.ts` (vitest — schema accept/reject cases)                                              |
-| `scripts/finalise-changelog.ts`         | `release.yml` `changeset:version` command  | `tests/finalise-changelog.test.ts` (vitest — finalise + gh/git resolver via fake runner)                              |
-| `scripts/enrich-changelog.ts`           | (pure lib used by finalise)                | `tests/enrich-changelog.test.ts` (vitest — fill-once, stats overwrite, idempotency)                                   |
-| `scripts/add-links-changelog.ts`        | (pure lib used by finalise)                | `tests/add-links-changelog.test.ts` (vitest — masking code/links, ASW/AKW IDs)                                        |
-| `scripts/stamp-changelog-version.ts`    | (pure lib used by finalise)                | `tests/stamp-changelog-version.test.ts` (vitest — stamp-once, absent-field)                                           |
+| File                                 | Replaces                                  | Tests                                                                                                                 |
+| ------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `scripts/ensure-yamllint.sh`         | `ci.yml` yamllint step                    | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
+| `scripts/ensure-actionlint.sh`       | `ci.yml` actionlint step                  | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
+| `scripts/ensure-bats.sh`             | `ci.yml` bats install step                | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
+| `send-it/derive-changeset.ts`        | (used by `/send-it`)                      | `tests/derive-changeset.test.ts` (vitest — slug, bump, body)                                                          |
+| `scripts/validate-changelog.ts`      | `ci.yml` infra job `validate:changelog`   | `tests/validate-changelog.test.ts` (vitest — schema accept/reject cases)                                              |
+| `scripts/finalise-changelog.ts`      | `release.yml` `changeset:version` command | `tests/finalise-changelog.test.ts` (vitest — finalise + gh/git resolver via fake runner)                              |
+| `scripts/enrich-changelog.ts`        | (pure lib used by finalise)               | `tests/enrich-changelog.test.ts` (vitest — fill-once, stats overwrite, idempotency)                                   |
+| `scripts/add-links-changelog.ts`     | (pure lib used by finalise)               | `tests/add-links-changelog.test.ts` (vitest — masking code/links, ASW/AKW IDs)                                        |
+| `scripts/stamp-changelog-version.ts` | (pure lib used by finalise)               | `tests/stamp-changelog-version.test.ts` (vitest — stamp-once, absent-field)                                           |
 
 CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh`, and `pnpm validate:changelog` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
 
@@ -170,10 +166,10 @@ The package is a flat-config preset composer. Source is TypeScript; consumers im
 
 Alongside the Changesets-generated root `CHANGELOG.md`, the repo keeps **one dated Markdown file per shippable change** under `changelog/` — a browsable, per-change, machine-readable record (the pattern is borrowed from the `octavo` repo, adapted for a single semver'd npm package: a `version` field is added, `affected_packages` dropped). Full schema and lifecycle in **`changelog/README.md`**.
 
-Two-stage lifecycle — and crucially **no bot or push to `main`**: finalisation rides inside the Changesets version PR (ASW-317).
+Two-stage lifecycle — finalisation rides inside the Changesets version PR (ASW-317), which the private release-orchestrator creates (ASW-320).
 
 1. **PR-time** — `/send-it` Step 5b writes `changelog/<YYYYMMDD-HHMMSS>-<slug>.md` with the PR-time fields (and empty enrichment placeholders), **gated identically to the changeset** (only for shippable changes per Step 5.4), so every entry maps to a version bump. The entry merges to `main` with its feature PR and sits with placeholders until release.
-2. **Release (in the version PR)** — `changesets/action`'s `version:` input is `pnpm run changeset:version`, which runs `changeset version` then `finalise-changelog.ts`. For every entry without a `version`, finalise resolves its merged PR from the `branch` field via `gh` (filling `merged_at`/`commit`/`pr`/`merge_strategy`/`stats`), stamps the just-bumped `version`, and rewrites Linear IDs to links. The action commits those changelog edits **into the "release: version packages" PR** — so they merge and publish through the normal flow with the action's own token. Idempotent and re-run-safe (it always starts from the placeholder entries on `main`).
+2. **Release (in the version PR)** — the **orchestrator** runs `pnpm run changeset:version` (= `changeset version` then `finalise-changelog.ts`) when it builds the version PR. For every entry without a `version`, finalise resolves its merged PR from the `branch` field via `gh` (filling `merged_at`/`commit`/`pr`/`merge_strategy`/`stats`), stamps the just-bumped `version`, and rewrites Linear IDs to links. The orchestrator commits those changelog edits **into the version PR** (pushed with its App token) — so they merge and publish through the normal flow. Idempotent and re-run-safe (it always starts from the placeholder entries on `main`).
 
 `validate:changelog` enforces the schema (CI: the `infra` job). Required frontmatter is relaxed to `title`/`created_at`/`category`/`breaking` so backfilled historical entries (no branch/author/stats) and in-flight entries (no version/stats yet) both pass.
 
@@ -188,17 +184,21 @@ There are two release modes — know which one you're in.
 Once the package exists on npm AND its Trusted Publisher is configured against this repo's `release.yml`, every release flows through CI:
 
 1. Make changes on a feature branch; `/send-it` bundles, writes `.changeset/<slug>.md`, pushes, opens a PR. CI (`.github/workflows/ci.yml`) runs build/lint/changeset-status on the PR.
-2. After merge, `changesets/action` (`.github/workflows/release.yml`) opens a "release: version packages" PR.
-3. Merging that PR triggers publish: npm via OIDC Trusted Publishing (no token, no OTP) + GitHub Packages via `GITHUB_TOKEN` + provenance attestation on the npm artifact.
+2. After merge, the private **release-orchestrator** (road-runner-bot, runs a 15-min cron) detects the pending changeset, mints a short-lived repo-scoped App token, runs `pnpm changeset:version`, pushes `changeset-release/main`, and opens the "`<pkg>@<version>`" version PR. On a later tick it squash-merges that PR once `🔬 Build & Lint` is green.
+3. The orchestrator's App-token merge pushes to `main`, re-firing `release.yml`, which now sees **no pending changesets** and publishes: npm via OIDC Trusted Publishing (no token, no OTP) + provenance attestation, plus git tags + a GitHub release.
+
+**`release.yml` is publish-only (ASW-320).** It does **not** create the version PR — that path needs an identity that isn't `github-actions[bot]` (the "Allow GitHub Actions to create and approve pull requests" toggle is deliberately off, ASW-313), so versioning lives in the orchestrator where the App key stays private (ASW-312). A `🔎 Detect pending changesets` step gates the publish on `has == 'false'`: a feature-merge (changesets pending) is a clean green no-op; a version-PR merge (none pending) publishes. The bot's private key never touches this public repo's CI.
 
 **The publish step uses a wrapper script, not `pnpm changeset publish`.** `changesets/action`'s `publish:` input invokes `bash infrastructure/scripts/publish-via-raw-npm.sh`, which calls `$PNPM_HOME/npm publish --access public --provenance` directly. Two reasons (both diagnosed in ASW-174):
 
 - `actions/setup-node` runs after `pnpm/action-setup` and prepends its tool-cache bin to PATH, so plain `npm` resolves to whatever npm Node 22 ships (10.9.8 as of Node 22.22.3, re-verified 2026-05-15). npm Trusted Publishing requires npm 11.5.1+. The upgrade-npm step works around this by `pnpm add -g npm@11.14.1` (pinned, not `@latest`, for CI reproducibility — bump in lockstep with ASW-165's re-verification) and appending `$PNPM_HOME` to `$GITHUB_PATH` so subsequent steps see the upgraded npm at the front of PATH.
 - Even with PATH correct, `pnpm changeset publish` itself fails — pnpm's own publish HTTP/OIDC implementation inside `@changesets/cli` doesn't satisfy what npm Trusted Publishing expects (the symptom is a generic 404 instead of npm 11.x's TP-aware error). The wrapper sidesteps this by calling npm directly. The wrapper is also idempotent: if `npm view name@version` succeeds, it exits 0 instead of re-publishing (which would 409).
 
-`changesets/action` still drives the version-PR side normally — only the publish phase is bypassed.
+In `release.yml`, `changesets/action` runs **only when there are no pending changesets** — i.e. solely to publish (npm + git tags + GitHub release). It no longer takes a `version:`/`commit:`/`title:` input; the orchestrator owns versioning and the version PR.
 
-**GitHub Packages publishes via its own idempotent script, not the changesets `published` gate.** The npm-side bypass above breaks `steps.changesets.outputs.published`: the raw-npm wrapper's stdout doesn't match the changesets `🦋  info Published` pattern, so the action reports `published=false` even on a successful publish. The GitHub Packages steps used to gate on that output and therefore _never ran_ (ASW-307). They're now ungated: after `setup-node` (GitHub Packages) writes the scoped `.npmrc`, `bash infrastructure/scripts/publish-to-github-packages.sh` does an idempotent `npm publish --access public` (no `--provenance` — token auth, not OIDC). A failed npm step aborts the job first, so this leg still only ships a version npm accepted, and it self-heals if a registry falls behind.
+**No GitHub Packages (ASW-320).** The package previously also published to GitHub Packages via `publish-to-github-packages.sh` (token auth, no provenance). That leg was dropped to simplify the pipeline — npmjs.org (with provenance) is the canonical public source. This also retired the ASW-307 workaround (the raw-npm wrapper makes `changesets/action` report `published=false`, which used to break the GH-Packages gate).
+
+> **Watch-item:** because of that `published=false` quirk, confirm the publish path still creates the **git tag** and **GitHub release** via `createGithubReleases: true`. If it no-ops, add an explicit `changeset tag && git push --tags` + `gh release create` fallback to `release.yml`.
 
 Don't reintroduce `NPM_TOKEN` **as a CI secret** unless OIDC is verified broken. The local `.env`-based `NPM_TOKEN` is a different concern — it's for laptop-driven publishes only, never CI.
 
