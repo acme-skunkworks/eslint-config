@@ -36,6 +36,10 @@ jobs:
           # pending changesets and publishes. The bot's private key never touches
           # this public repo's CI (ASW-311 / ASW-312 / ASW-320).
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Don't write GITHUB_TOKEN into .git/config — nothing here git-pushes
+          # (tags/release go via the gh API, npm via OIDC). Avoids the artipacked
+          # credential-persistence exposure.
+          persist-credentials: false
 
       - name: ⚙️ Load repo config
         id: repo
@@ -209,6 +213,10 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Publish/attest only — never git-pushes. Don't persist GITHUB_TOKEN in
+          # .git/config (artipacked credential-persistence exposure).
+          persist-credentials: false
 
       - name: ⚙️ Load repo config
         id: repo
@@ -245,7 +253,11 @@ jobs:
         run: |
           set -euo pipefail
           tarball="$(npm pack --silent)"
-          echo "tarball=$PWD/$tarball" >> "$GITHUB_OUTPUT"
+          {
+            echo "tarball<<EOF"
+            echo "$PWD/$tarball"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
           echo "Packed $tarball"
 
       - name: 🔏 Attest build provenance
