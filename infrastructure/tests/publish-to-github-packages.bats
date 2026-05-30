@@ -141,3 +141,17 @@ npm error 500 Internal Server Error'
   echo "$output" | grep -q "TARBALL is not set"
   ! grep -q "^npm publish" "$CALLS_LOG"
 }
+
+@test "registry drift: a non-canonical GITHUB_PACKAGES_REGISTRY_URL aborts without publishing" {
+  # ASW-330: the publish target is hard-coded; the script fails closed rather
+  # than send the GITHUB_TOKEN to whatever host a config edit points it at.
+  write_fake_npm 1
+  export GITHUB_PACKAGES_REGISTRY_URL="https://evil.example.com"
+
+  run bash "$SCRIPT_DIR/publish-to-github-packages.sh"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "not the expected"
+  ! grep -q "^npm publish" "$CALLS_LOG"
+  # And it never probed the attacker host either.
+  ! grep -q "evil.example.com" "$CALLS_LOG"
+}
