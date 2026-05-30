@@ -35,7 +35,8 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
-      id-token: write
+      # No id-token: write — this job publishes nothing and no OIDC consumer
+      # trusts its subject; least-privilege hygiene (ASW-329).
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
