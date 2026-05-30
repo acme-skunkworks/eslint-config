@@ -1,7 +1,6 @@
 ---
 name: Load repo config
-description:
-  Loads non-secret CI/release knobs from infrastructure/repo-config.yaml into step outputs.
+description: Loads non-secret CI/release knobs from infrastructure/repo-config.yaml into step outputs.
 
 outputs:
   default_branch:
@@ -12,17 +11,9 @@ outputs:
     description: Path passed to actions/setup-node node-version-file.
     value: ${{ steps.load.outputs.node_version_file }}
 
-  npm_scope:
-    description: NPM scope for GitHub Packages (setup-node scope input).
-    value: ${{ steps.load.outputs.npm_scope }}
-
   npm_registry_url:
     description: Public npm registry URL.
     value: ${{ steps.load.outputs.npm_registry_url }}
-
-  github_packages_registry_url:
-    description: GitHub Packages npm registry URL.
-    value: ${{ steps.load.outputs.github_packages_registry_url }}
 
 runs:
   using: composite
@@ -55,9 +46,7 @@ runs:
         mapping = [
           %w(default_branch defaultBranch),
           %w(node_version_file nodeVersionFile),
-          %w(npm_scope npmScope),
-          %w(npm_registry_url npmRegistryUrl),
-          %w(github_packages_registry_url githubPackagesRegistryUrl)
+          %w(npm_registry_url npmRegistryUrl)
         ]
 
         mapping.each do |(output_key, yaml_key)|

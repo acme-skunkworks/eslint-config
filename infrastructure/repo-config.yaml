@@ -6,6 +6,4 @@
 
 defaultBranch: main
 nodeVersionFile: .nvmrc
-npmScope: "@acme-skunkworks"
 npmRegistryUrl: https://registry.npmjs.org
-githubPackagesRegistryUrl: https://npm.pkg.github.com

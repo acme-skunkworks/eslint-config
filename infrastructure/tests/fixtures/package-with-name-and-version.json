@@ -1,5 +1,0 @@
-{
-  "name": "@acme-skunkworks/eslint-config",
-  "version": "1.2.3",
-  "description": "fixture used by retitle-release-pr.test.ts"
-}
