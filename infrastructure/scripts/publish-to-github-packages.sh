@@ -37,6 +37,18 @@ set -euo pipefail
 : "${GITHUB_PACKAGES_REGISTRY_URL:?GITHUB_PACKAGES_REGISTRY_URL is not set; pass it from infrastructure/repo-config.yaml}"
 : "${TARBALL:?TARBALL is not set; the workflow must npm pack and attest the tarball first}"
 
+# Hard-code the publish target and fail closed if repo-config drifts (ASW-330).
+# The ephemeral GITHUB_TOKEN is sent as a bearer credential to whatever registry
+# we publish to, so the host must never be data-driven from a config value an
+# attacker could redirect by merging an edit. repo-config.yaml still supplies the
+# value to setup-node's registry-url, but here we assert it equals the one known
+# host and publish only to that constant.
+readonly EXPECTED_REGISTRY="https://npm.pkg.github.com"
+if [ "$GITHUB_PACKAGES_REGISTRY_URL" != "$EXPECTED_REGISTRY" ]; then
+  echo "Refusing to publish: GITHUB_PACKAGES_REGISTRY_URL='$GITHUB_PACKAGES_REGISTRY_URL' is not the expected '$EXPECTED_REGISTRY'." >&2
+  exit 1
+fi
+
 NAME=$(node -p "require('./package.json').name")
 VERSION=$(node -p "require('./package.json').version")
 
@@ -51,7 +63,7 @@ VERSION=$(node -p "require('./package.json').version")
 # registry blip or a bad token into a spurious publish attempt rather than a
 # clear, actionable error.
 set +e
-view_output=$(npm view "$NAME@$VERSION" version --registry "$GITHUB_PACKAGES_REGISTRY_URL" 2>&1)
+view_output=$(npm view "$NAME@$VERSION" version --registry "$EXPECTED_REGISTRY" 2>&1)
 view_status=$?
 set -e
 
@@ -72,4 +84,4 @@ if [ "$view_status" -ne 0 ] && ! printf '%s' "$view_output" | grep -qiE 'E404|no
 fi
 
 echo "Publishing $NAME@$VERSION to GitHub Packages from $TARBALL..."
-npm publish "$TARBALL" --access public --registry "$GITHUB_PACKAGES_REGISTRY_URL"
+npm publish "$TARBALL" --access public --registry "$EXPECTED_REGISTRY"

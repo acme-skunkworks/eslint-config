@@ -51,22 +51,46 @@ runs:
         gh_out = ENV.fetch("GITHUB_OUTPUT")
         pairs = {}
 
+        # Each value is allowlist-validated against its expected shape before it
+        # is written to GITHUB_OUTPUT (ASW-330). These values flow into
+        # privileged contexts (setup-node registry-url, the GitHub Packages
+        # publish target), and an unvalidated value containing a newline could
+        # inject additional step outputs. \A..\z anchors (not ^..$) so an
+        # embedded newline can't satisfy the pattern on a single line. No
+        # untrusted path exists today (the file only changes via a merged PR),
+        # but this fails closed.
+        token   = /\A[A-Za-z0-9._\/-]+\z/         # branch names, file paths
+        url     = /\Ahttps:\/\/[A-Za-z0-9._:\/-]+\z/  # https registry URLs
+        scope   = /\A@[a-z0-9-]+\z/               # npm scope
+
         mapping = [
-          %w(default_branch defaultBranch),
-          %w(node_version_file nodeVersionFile),
-          %w(npm_registry_url npmRegistryUrl),
-          %w(npm_scope npmScope),
-          %w(github_packages_registry_url githubPackagesRegistryUrl)
+          ["default_branch", "defaultBranch", token],
+          ["node_version_file", "nodeVersionFile", token],
+          ["npm_registry_url", "npmRegistryUrl", url],
+          ["npm_scope", "npmScope", scope],
+          ["github_packages_registry_url", "githubPackagesRegistryUrl", url]
         ]
 
-        mapping.each do |(output_key, yaml_key)|
+        mapping.each do |output_key, yaml_key, pattern|
           raw = cfg[yaml_key]
           if raw.nil? || raw.to_s.strip.empty?
             warn("::error title=missing key::#{yaml_key} missing or empty in infrastructure/repo-config.yaml")
             abort
           end
 
-          pairs[output_key] = raw.to_s.strip
+          value = raw.to_s.strip
+
+          if value.include?("\n") || value.include?("=")
+            warn("::error title=invalid value::#{yaml_key} contains a newline or '=' — refusing to write to GITHUB_OUTPUT")
+            abort
+          end
+
+          unless value.match?(pattern)
+            warn("::error title=invalid value::#{yaml_key}='#{value}' does not match the allowed pattern #{pattern.inspect}")
+            abort
+          end
+
+          pairs[output_key] = value
         end
 
         File.open(gh_out, "a") do |f|
