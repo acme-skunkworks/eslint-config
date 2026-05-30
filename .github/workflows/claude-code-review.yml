@@ -3,6 +3,17 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+    # Skip the review when a PR changes ONLY the Claude workflow files.
+    # claude-code-action's app-token exchange requires the invoking workflow to
+    # match the version on the default branch, so a PR that edits these files
+    # 401s on workflow validation and can't be reviewed by the bot anyway —
+    # this avoids a spurious failing check. paths-ignore skips only when EVERY
+    # changed file matches; a PR touching these plus anything else still runs.
+    # (claude-review is not a required status check, so a path-skip won't block
+    # merges — verified against the repo rulesets.)
+    paths-ignore:
+      - ".github/workflows/claude.yml"
+      - ".github/workflows/claude-code-review.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
