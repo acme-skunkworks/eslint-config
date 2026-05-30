@@ -80,9 +80,10 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.local
-          key: ${{ runner.os }}-python-yamllint-1.37.1-${{ hashFiles('.yamllint.yml') }}
+          # Keyed on the hash-locked requirements file (ASW-327): a version or
+          # transitive-dependency bump busts the cache automatically.
+          key: ${{ runner.os }}-python-yamllint-${{ hashFiles('infrastructure/requirements-yamllint.txt') }}
           restore-keys: |
-            ${{ runner.os }}-python-yamllint-1.37.1-
             ${{ runner.os }}-python-yamllint-
 
       - name: 📦 Cache actionlint binary

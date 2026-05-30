@@ -45,7 +45,7 @@ EOF
   ! grep -q "^pip" "$CALLS_LOG"
 }
 
-@test "not-installed: pip install runs with --break-system-packages and pinned version" {
+@test "not-installed: pip install runs with --require-hashes against the pinned requirements" {
   # No yamllint on PATH initially. pip stub installs a yamllint shim into
   # the script's expected location so the subsequent invocation finds it.
   write_fake pip "mkdir -p \"\$HOME/.local/bin\"; cat > \"\$HOME/.local/bin/yamllint\" <<'INNER'
@@ -56,7 +56,8 @@ chmod +x \"\$HOME/.local/bin/yamllint\""
 
   run bash "$SCRIPT_DIR/ensure-yamllint.sh"
   [ "$status" -eq 0 ]
-  grep -q "^pip install --user --break-system-packages yamllint==1.37.1$" "$CALLS_LOG"
+  # Hash-locked install, not a bare `pip install yamllint==X` (ASW-327).
+  grep -qE "^pip install --user --break-system-packages --require-hashes -r .*requirements-yamllint\\.txt$" "$CALLS_LOG"
   grep -q "^yamllint \\.$" "$CALLS_LOG"
 }
 
@@ -81,8 +82,8 @@ chmod +x \"\$HOME/.local/bin/yamllint\""
   [ ! -s "$GITHUB_PATH_FILE" ]
 }
 
-@test "honours YAMLLINT_VERSION env override" {
-  export YAMLLINT_VERSION="1.99.0"
+@test "honours YAMLLINT_REQUIREMENTS env override" {
+  export YAMLLINT_REQUIREMENTS="/tmp/custom-reqs.txt"
   write_fake pip "mkdir -p \"\$HOME/.local/bin\"; cat > \"\$HOME/.local/bin/yamllint\" <<'INNER'
 #!/usr/bin/env bash
 exit 0
@@ -91,5 +92,5 @@ chmod +x \"\$HOME/.local/bin/yamllint\""
 
   run bash "$SCRIPT_DIR/ensure-yamllint.sh"
   [ "$status" -eq 0 ]
-  grep -q "yamllint==1.99.0" "$CALLS_LOG"
+  grep -q "^pip install --user --break-system-packages --require-hashes -r /tmp/custom-reqs.txt$" "$CALLS_LOG"
 }

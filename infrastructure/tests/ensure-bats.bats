@@ -19,7 +19,19 @@ setup() {
   mkdir -p "$HOME"
 
   export PATH="$FAKE_BIN:/usr/bin:/bin"
+  # Disable the tarball-digest check by default; most tests use a fake curl that
+  # produces no real tarball. The dedicated checksum tests set it explicitly.
+  export BATS_SHA256=""
   cd "$WORK"
+}
+
+# Portable sha256 of a file (Linux sha256sum / macOS shasum).
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
 }
 
 write_fake() {
@@ -121,6 +133,48 @@ BATS
   run bash "$SCRIPT_DIR/ensure-bats.sh"
   [ "$status" -ne 0 ]
   grep -q "^curl -fsSL https://github.com/bats-core/bats-core/archive/refs/tags/v1.13.0.tar.gz" "$CALLS_LOG"
+}
+
+@test "checksum match: tarball digest equals the pin, extraction proceeds" {
+  # Pin BATS_SHA256 to the digest of the bytes the fake curl will write, so the
+  # check passes and the script proceeds to extract + install.
+  SAMPLE="${BATS_TEST_TMPDIR}/sample.tgz"
+  printf '%s' "pretend-bats-tarball" > "$SAMPLE"
+  export BATS_SHA256="$(sha256_of "$SAMPLE")"
+
+  BATS_VERSION="${BATS_VERSION:-1.13.0}"
+  EXTRACT_DIR="${BATS_TEST_TMPDIR}/extracted-bats-core-${BATS_VERSION}"
+  mkdir -p "$EXTRACT_DIR"
+  cat > "$EXTRACT_DIR/install.sh" <<'INSTALL'
+#!/usr/bin/env bash
+PREFIX="$1"
+mkdir -p "$PREFIX/bin"
+cat > "$PREFIX/bin/bats" <<'BATS'
+#!/usr/bin/env bash
+echo "Bats 1.13.0"
+BATS
+chmod +x "$PREFIX/bin/bats"
+INSTALL
+  chmod +x "$EXTRACT_DIR/install.sh"
+
+  # Fake curl writes the sample bytes to its -o target so the digest matches.
+  write_fake curl 'while [ "$#" -gt 0 ]; do if [ "$1" = "-o" ]; then printf "%s" "pretend-bats-tarball" > "$2"; fi; shift; done'
+  write_fake tar "cp -r '$EXTRACT_DIR' \"\$(echo \"\$*\" | awk -F'-C ' '{print \$2}')/bats-core-${BATS_VERSION}\""
+
+  run bash "$SCRIPT_DIR/ensure-bats.sh"
+  [ "$status" -eq 0 ]
+  grep -q "^tar " "$CALLS_LOG"
+}
+
+@test "checksum mismatch: a tampered tarball aborts before extraction" {
+  export BATS_SHA256="0000000000000000000000000000000000000000000000000000000000000000"
+  # Fake curl writes some bytes to -o (so the file exists) that won't match.
+  write_fake curl 'while [ "$#" -gt 0 ]; do if [ "$1" = "-o" ]; then printf "%s" "tampered-bytes" > "$2"; fi; shift; done'
+  write_fake tar "echo 'tar should not have been called' >&2; exit 1"
+
+  run bash "$SCRIPT_DIR/ensure-bats.sh"
+  [ "$status" -ne 0 ]
+  ! grep -q "^tar " "$CALLS_LOG"
 }
 
 @test "appends \$HOME/.local/bin to GITHUB_PATH even on cache hit" {

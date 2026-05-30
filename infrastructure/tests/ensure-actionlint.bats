@@ -16,7 +16,20 @@ setup() {
   : > "$CALLS_LOG"
 
   export PATH="$FAKE_BIN:/usr/bin:/bin"
+  # Disable the linux/amd64 binary-digest check by default; the fixture's stub
+  # ./actionlint won't match the pinned real-binary digest. The dedicated
+  # checksum tests below set it explicitly.
+  export ACTIONLINT_SHA256_LINUX_AMD64=""
   cd "$WORK"
+}
+
+# Portable sha256 of a file (Linux sha256sum / macOS shasum).
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
 }
 
 # Writes a fake command on PATH that records its argv to $CALLS_LOG and then
@@ -54,15 +67,50 @@ write_fake() {
 
   run bash "$SCRIPT_DIR/ensure-actionlint.sh"
   [ "$status" -eq 0 ]
-  grep -q "^curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/" "$CALLS_LOG"
+  # Bootstrap fetched from the immutable commit SHA, not the mutable v1.7.5 tag.
+  grep -q "^curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/e11169d0656294827d65370a3c76a2325406da85/scripts/download-actionlint.bash$" "$CALLS_LOG"
+  # Version passed as an arg so the bootstrap installs that exact release.
+  grep -q "^actionlint-bootstrap 1.7.5$" "$CALLS_LOG"
   grep -q "^actionlint -color$" "$CALLS_LOG"
 }
 
-@test "honours ACTIONLINT_VERSION env override in the download URL" {
+@test "honours ACTIONLINT_VERSION env override (passed to the bootstrap)" {
   export ACTIONLINT_VERSION="1.99.0"
   write_fake curl "cat \"$FIXTURES/fake-actionlint-bootstrap.sh\""
 
   run bash "$SCRIPT_DIR/ensure-actionlint.sh"
   [ "$status" -eq 0 ]
-  grep -q "rhysd/actionlint/v1.99.0/" "$CALLS_LOG"
+  grep -q "^actionlint-bootstrap 1.99.0$" "$CALLS_LOG"
+}
+
+@test "honours ACTIONLINT_BOOTSTRAP_REF env override in the download URL" {
+  export ACTIONLINT_BOOTSTRAP_REF="deadbeefcafe"
+  write_fake curl "cat \"$FIXTURES/fake-actionlint-bootstrap.sh\""
+
+  run bash "$SCRIPT_DIR/ensure-actionlint.sh"
+  [ "$status" -eq 0 ]
+  grep -q "rhysd/actionlint/deadbeefcafe/scripts/download-actionlint.bash" "$CALLS_LOG"
+}
+
+@test "checksum match: binary digest equals the pin, actionlint runs (linux/amd64)" {
+  [ "$(uname -s)-$(uname -m)" = "Linux-x86_64" ] || skip "binary-digest check is linux/amd64 only"
+  # Learn the digest of the stub the fixture writes, then pin it so the check passes.
+  ( cd "$WORK" && CALLS_LOG=/dev/null bash "$FIXTURES/fake-actionlint-bootstrap.sh" >/dev/null )
+  export ACTIONLINT_SHA256_LINUX_AMD64="$(sha256_of "$WORK/actionlint")"
+  rm -f "$WORK/actionlint"
+  write_fake curl "cat \"$FIXTURES/fake-actionlint-bootstrap.sh\""
+
+  run bash "$SCRIPT_DIR/ensure-actionlint.sh"
+  [ "$status" -eq 0 ]
+  grep -q "^actionlint -color$" "$CALLS_LOG"
+}
+
+@test "checksum mismatch: a tampered binary aborts before actionlint runs (linux/amd64)" {
+  [ "$(uname -s)-$(uname -m)" = "Linux-x86_64" ] || skip "binary-digest check is linux/amd64 only"
+  export ACTIONLINT_SHA256_LINUX_AMD64="0000000000000000000000000000000000000000000000000000000000000000"
+  write_fake curl "cat \"$FIXTURES/fake-actionlint-bootstrap.sh\""
+
+  run bash "$SCRIPT_DIR/ensure-actionlint.sh"
+  [ "$status" -ne 0 ]
+  ! grep -q "^actionlint -color$" "$CALLS_LOG"
 }
