@@ -1,142 +1,82 @@
 # @acme-skunkworks/eslint-config
 
-Shared ESLint v9 configuration with TypeScript and React support, composed from named-export presets.
+> A shared ESLint v9 flat-config **preset composer** for TypeScript and React projects — import named-export presets and compose only the ones you need.
 
-## 📦 Installation
+[![npm version](https://img.shields.io/npm/v/@acme-skunkworks/eslint-config?logo=npm)](https://www.npmjs.com/package/@acme-skunkworks/eslint-config)
+[![Provenance: built and signed on GitHub Actions](https://img.shields.io/badge/provenance-built%20%26%20signed%20on%20GitHub%20Actions-2ea44f?logo=github)](https://www.npmjs.com/package/@acme-skunkworks/eslint-config#provenance)
+[![License: MIT](https://img.shields.io/npm/l/@acme-skunkworks/eslint-config)](LICENSE)
+[![Node engine](https://img.shields.io/node/v/@acme-skunkworks/eslint-config?logo=node.js)](https://www.npmjs.com/package/@acme-skunkworks/eslint-config)
+
+Every release is published to npm via OIDC Trusted Publishing with a **provenance attestation** — the artefact is built and signed on GitHub Actions, so consumers can verify exactly which commit and workflow produced it.
+
+## Install
 
 ```bash
 pnpm add -D @acme-skunkworks/eslint-config eslint prettier
 ```
 
-Every ESLint plugin used by the config ships as a regular dependency — you don't install plugins separately. `eslint` and `prettier` are peer dependencies.
+`eslint` (`^8.57.0 || ^9.0.0`) and `prettier` (`^3.0.0`) are **required peer dependencies** — install them alongside. Every ESLint plugin the config uses ships as a regular dependency, so you don't install plugins separately. Node 22+ is required.
 
-## 🚀 Usage
+> **ESLint v8 users:** flat config isn't the default in v8 — set `ESLINT_USE_FLAT_CONFIG=1` so ESLint reads your `eslint.config.js`. ESLint v9 uses flat config by default, so no flag is needed.
 
-The package exports presets as named exports. Compose them in your `eslint.config.js`:
+## Quick start
+
+The package exposes each preset as a named export. Compose them in your `eslint.config.js`:
 
 ```js
-import { base, typescript, frameworkRouting } from "@acme-skunkworks/eslint-config";
+import {
+  base,
+  typescript,
+  frameworkRouting,
+} from "@acme-skunkworks/eslint-config";
 
 export default [
   ...base,
   typescript,
   ...frameworkRouting,
   // your overrides last so they win
-  {
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-    },
-  },
+  { rules: { "@typescript-eslint/no-explicit-any": "warn" } },
 ];
 ```
 
-Pull in the presets relevant to your project:
+Pull in only the presets your project needs. Array presets are spread with `...`; single-config presets are added as-is — the table below notes which is which.
 
-| Export | What it covers |
-|---|---|
-| `base` | Plugin-alias hack + global ignores + the canonical baseline + packageJson lint config + commonjs file overrides + the big preferences block (top-level type imports, `func-style: declaration`, prettier integration, import resolver, `no-console` warn, etc.). The "you almost always want this" stack. |
-| `typescript` | Overrides for `**/*.{ts,tsx}` (disables `react/no-unused-prop-types` and `react/prop-types`). |
-| `frameworkRouting` | Disables `canonical/filename-match-exported` for routing dirs (`routes/**`, `app/**`, `pages/**`, `src/routes/**`, `src/pages/**`); re-allows arrow functions on `root.tsx` / `*.route.tsx`. Order matters — must spread **after** `base`. |
-| `astro` | `eslint-plugin-astro/flat/recommended` + Astro-specific overrides. Pull in for Astro projects. |
-| `sanity` | Schema property ordering for `*.schema.ts` and structure-file exceptions. Pull in for projects using Sanity Studio. |
-| `testing` | Relaxes strict TypeScript rules and devDependencies imports for `**/*.{test,spec}.*`, `__tests__/**`, and setup files. |
-| `storybook` | Overrides for `**/*.stories.{ts,tsx}`. |
-| `complexity` | Raises cyclomatic complexity threshold to 40 for `**/scripts/**` (orchestration scripts run linearly). Opt-in. |
-| `e2e` | Disables `react-hooks/rules-of-hooks` for `**/e2e/**` (Playwright `test.extend` callbacks are false positives). Opt-in. |
-| `tableComponents` | Disables `react/no-unstable-nested-components` for `**/*Table.tsx` (TanStack Table / Refine column-cell renderers). Opt-in. |
+## Presets
 
-> **Note:** Requires ESLint v9+ with flat config. Node 22+.
+**Core** — the everyday stack:
 
-## 🔄 Migrating from `@robeasthope/eslint-config`
+| Preset             | Shape         | What it covers                                                                                                                                                                                                                                                                                      |
+| ------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base`             | array (`...`) | Plugin-alias hack, global ignores, the canonical baseline, `package.json` lint config, CommonJS file overrides, and the `preferences` block (top-level type imports, `func-style: declaration`, Prettier integration, import resolver, `no-console` warn). The "you almost always want this" stack. |
+| `typescript`       | single        | Overrides for `**/*.{ts,tsx}` — disables `react/no-unused-prop-types` and `react/prop-types`, which are redundant under TypeScript.                                                                                                                                                                 |
+| `frameworkRouting` | array (`...`) | Turns off `canonical/filename-match-exported` for routing dirs — `routes/**`, `app/**`, `pages/**` (Next.js), `src/routes/**` (SvelteKit), `src/pages/**` (Astro) — and re-allows arrow functions on `root.tsx` / `*.route.tsx`. Spread **after** `base` (see Gotchas).                             |
+| `testing`          | single        | Relaxes strict TypeScript rules and `import/no-extraneous-dependencies` for `**/*.{test,spec}.*`, `__tests__/**`, and setup files.                                                                                                                                                                  |
 
-This package was previously published as `@robeasthope/eslint-config` from the [`RobEasthope/protomolecule`](https://github.com/RobEasthope/protomolecule) monorepo (versions up to and including v6.2.1). It now ships from this standalone repo under the `@acme-skunkworks` scope, with a named-export composition pattern.
+**Opt-in** — pull in per project:
 
-### Step 1: rename the dep
+| Preset            | Shape         | What it covers                                                                                                      |
+| ----------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `astro`           | array (`...`) | `eslint-plugin-astro/flat/recommended` plus Astro-specific overrides.                                               |
+| `sanity`          | array (`...`) | Schema property ordering for `*.schema.ts` and structure-file exceptions, for Sanity Studio projects.               |
+| `storybook`       | single        | Overrides for `**/*.stories.{ts,tsx}`.                                                                              |
+| `complexity`      | array (`...`) | Raises the cyclomatic-complexity threshold to 40 for `**/scripts/**`, where orchestration scripts run linearly.     |
+| `e2e`             | single        | Disables `react-hooks/rules-of-hooks` for `**/e2e/**` — Playwright `test.extend` callbacks are false positives.     |
+| `tableComponents` | single        | Disables `react/no-unstable-nested-components` for `**/*Table.tsx` — TanStack Table / Refine column-cell renderers. |
 
-```bash
-pnpm remove @robeasthope/eslint-config
-pnpm add -D @acme-skunkworks/eslint-config
-```
+> A deprecated **default export** still bundles the v6.x composition for back-compat during migration. New code should use the named exports above. See the [migration guide](MIGRATION_FROM_PROTOMOLECULE.md).
 
-### Step 2: switch to named exports
+## Gotchas
 
-The default export still works during the migration window, but is **deprecated** and will be removed in a future major:
+Two ordering rules are easy to get wrong and fail **silently** — the config still loads, but the intended override never wins:
 
-```js
-// Old (still works in v1, deprecated)
-import eslintConfig from "@acme-skunkworks/eslint-config";
-export default [...eslintConfig];
+- **Spread `frameworkRouting` _after_ `...base`.** Its `func-style` override must come later in the array than the `preferences` block (which `base` includes), or `base` wins and the React Router 7 typed-export pattern breaks.
+- **`frameworkRouting` is an ordered pair of configs** for the same reason — its second element (the React Router exceptions) must stay after its first, which in turn must follow `preferences`. If you ever expand the spread into individual elements, preserve their order.
 
-// New (preferred — pull in only what you need)
-import { base, typescript, frameworkRouting } from "@acme-skunkworks/eslint-config";
-export default [...base, typescript, ...frameworkRouting];
-```
+Full rationale (and the protomolecule issues behind it) is in [`CLAUDE.md`](CLAUDE.md).
 
-If your project was a Sanity / Storybook / Astro consumer, opt-in to those presets explicitly. The default export bundled all of them; the new shape makes the dependencies explicit.
+## Links
 
-### What's new in v1
-
-- **Tempest fold-in.** Plugin versions bumped to current; `complexity`, `e2e`, and `tableComponents` are new opt-in presets ported from Tempest. See `MIGRATION_FROM_PROTOMOLECULE.md` for the per-preset diff.
-- **Named-export composition.** Each preset is independently importable; consumers compose what they need.
-- **`prettier` is now a `peerDependency`.** Was already a transitive dep via `eslint-plugin-prettier`; this just makes the contract explicit.
-
-For older breaking-change history (v4 → v5 plugin bundling, v5 → v6 top-level type imports) see the original [protomolecule changelog](https://github.com/RobEasthope/protomolecule/blob/main/packages/eslint-config/CHANGELOG.md).
-
-## ✨ Features
-
-- **TypeScript** — full TypeScript linting via `typescript-eslint` v8.
-- **React** — React 19 compatible rules from canonical-auto.
-- **React Router 7 compatible** — top-level type imports, `func-style: declaration` with framework-aware exceptions for typed exports on `root.tsx` / `*.route.tsx`.
-- **Astro** — opt-in preset.
-- **Sanity** — opt-in preset for schema property ordering and structure-file exceptions.
-- **Modern JavaScript** — ES2022+, Prettier integration, accessibility checks.
-
-## 🛠️ Customisation
-
-Override any rule from your local config — last config wins in flat config:
-
-```js
-import { base, typescript } from "@acme-skunkworks/eslint-config";
-
-export default [
-  ...base,
-  typescript,
-  {
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "react/prop-types": "off",
-    },
-  },
-];
-```
-
-Add additional plugins by configuring them directly:
-
-```js
-import { base, typescript } from "@acme-skunkworks/eslint-config";
-import pluginReact from "eslint-plugin-react";
-
-export default [
-  ...base,
-  typescript,
-  {
-    plugins: { react: pluginReact },
-    rules: { "react/jsx-uses-react": "error" },
-  },
-];
-```
-
-## 🔧 Development
-
-```bash
-pnpm install   # install deps
-pnpm run build # tsc → dist/
-pnpm lint      # lint this package's own source
-pnpm lint:fix  # auto-fix
-```
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE).
-
-This software is provided "as is", without warranty of any kind. Use at your own risk.
+- [Changelog](CHANGELOG.md)
+- [Migration guide](MIGRATION_FROM_PROTOMOLECULE.md) — moving from `@robeasthope/eslint-config`
+- [Repository](https://github.com/acme-skunkworks/eslint-config)
+- [Licence](LICENSE) — MIT
