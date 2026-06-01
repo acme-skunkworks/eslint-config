@@ -93,9 +93,12 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ./actionlint
+          # Exact-key-or-cold, like the yamllint cache above — no restore-keys
+          # prefix fallback, which could restore an older actionlint under a
+          # bumped version key. ensure-actionlint.sh also version-gates the
+          # binary (re-downloads a stale hit), so this is belt-and-braces.
+          # Bump in lockstep with ACTIONLINT_VERSION in ensure-actionlint.sh.
           key: ${{ runner.os }}-actionlint-1.7.5
-          restore-keys: |
-            ${{ runner.os }}-actionlint-
 
       - name: 📝 Run yamllint
         # Logic lives in infrastructure/scripts/ensure-yamllint.sh — install

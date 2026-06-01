@@ -45,9 +45,12 @@ write_fake() {
   chmod +x "$FAKE_BIN/$name"
 }
 
-@test "cache-hit: existing ./actionlint is invoked, no curl download" {
+@test "cache-hit: existing ./actionlint at the pinned version is invoked, no curl download" {
+  # needs_install() version-gates the cached binary, so the stub must answer
+  # `-version` with the pinned version to be recognised as current.
   {
     printf '#!/usr/bin/env bash\n'
+    printf 'if [ "$1" = "-version" ]; then echo "1.7.5"; exit 0; fi\n'
     printf 'echo "actionlint $*" >> "%s"\n' "$CALLS_LOG"
   } > "$WORK/actionlint"
   chmod +x "$WORK/actionlint"
@@ -57,6 +60,28 @@ write_fake() {
   [ "$status" -eq 0 ]
   grep -q "^actionlint -color$" "$CALLS_LOG"
   ! grep -q "^curl" "$CALLS_LOG"
+}
+
+@test "stale cache: ./actionlint at the wrong version triggers a re-download" {
+  # A cache restored under a mismatched key (or a stale binary) is executable
+  # but reports the wrong version. needs_install() must re-download rather than
+  # run it. The stub answers `-version` with an old version and exits before
+  # logging, so CALLS_LOG reflects only the bootstrap + the fresh binary's run.
+  {
+    printf '#!/usr/bin/env bash\n'
+    printf 'if [ "$1" = "-version" ]; then echo "1.6.0"; exit 0; fi\n'
+    printf 'echo "stale-actionlint $*" >> "%s"\n' "$CALLS_LOG"
+  } > "$WORK/actionlint"
+  chmod +x "$WORK/actionlint"
+  write_fake curl "cat \"$FIXTURES/fake-actionlint-bootstrap.sh\""
+
+  run bash "$SCRIPT_DIR/ensure-actionlint.sh"
+  [ "$status" -eq 0 ]
+  # Re-downloaded at the pinned version...
+  grep -q "^actionlint-bootstrap 1.7.5$" "$CALLS_LOG"
+  # ...and the fresh binary ran, not the stale one.
+  grep -q "^actionlint -color$" "$CALLS_LOG"
+  ! grep -q "^stale-actionlint" "$CALLS_LOG"
 }
 
 @test "cache-miss: curl downloads a bootstrap that drops ./actionlint, then it is invoked" {
