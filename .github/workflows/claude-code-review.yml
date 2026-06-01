@@ -47,11 +47,20 @@ jobs:
         uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Pin the marketplace to an immutable tag (ASW-329) — the action is
-          # SHA-pinned but the plugin source would otherwise float to the
-          # default-branch HEAD at runtime. Re-pin deliberately whenever the
-          # claude-code-action SHA above is bumped.
-          plugin_marketplaces: "https://github.com/anthropics/claude-code.git#v2.1.158"
+          # NB: this action version (v1.0.133) has NO marketplace ref-pin
+          # mechanism. base-action/src/install-plugins.ts validates the input
+          # against /^https:\/\/…\.git$/ — it MUST end in `.git` — then passes
+          # it verbatim to `claude plugin marketplace add`. A `#tag`/`@ref`
+          # suffix fails the regex ("Invalid marketplace URL format") and a
+          # bare URL always clones the marketplace at default-branch HEAD.
+          # So the ASW-329 immutable-tag pin is impossible here and the
+          # marketplace necessarily floats (ASW-343). Accepted risk: the
+          # marketplace repo is the same first-party org (anthropics) as the
+          # SHA-pinned action above, and the review is already hardened —
+          # config restored from origin/main (untrusted PR head), WebSearch/
+          # WebFetch disallowed, tight --allowedTools, no publish identity.
+          # Do NOT re-add a `#tag` suffix: it re-breaks the job.
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
           plugins: "code-review@claude-code-plugins"
           prompt: "/code-review:code-review https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
           allowed_bots: "road-runner-bot[bot]"
