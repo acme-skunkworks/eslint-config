@@ -17,6 +17,8 @@ pnpm add -D @acme-skunkworks/eslint-config eslint prettier
 
 `eslint` (`^8.57.0 || ^9.0.0`) and `prettier` (`^3.0.0`) are **required peer dependencies** — install them alongside. Every ESLint plugin the config uses ships as a regular dependency, so you don't install plugins separately. Node 22+ is required.
 
+> **ESLint v8 users:** flat config isn't the default in v8 — set `ESLINT_USE_FLAT_CONFIG=1` so ESLint reads your `eslint.config.js`. ESLint v9 uses flat config by default, so no flag is needed.
+
 ## Quick start
 
 The package exposes each preset as a named export. Compose them in your `eslint.config.js`:
@@ -47,7 +49,7 @@ Pull in only the presets your project needs. Array presets are spread with `...`
 | ------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `base`             | array (`...`) | Plugin-alias hack, global ignores, the canonical baseline, `package.json` lint config, CommonJS file overrides, and the `preferences` block (top-level type imports, `func-style: declaration`, Prettier integration, import resolver, `no-console` warn). The "you almost always want this" stack. |
 | `typescript`       | single        | Overrides for `**/*.{ts,tsx}` — disables `react/no-unused-prop-types` and `react/prop-types`, which are redundant under TypeScript.                                                                                                                                                                 |
-| `frameworkRouting` | array (`...`) | Turns off `canonical/filename-match-exported` for routing dirs (`routes/**`, `app/**`, `pages/**`, …) and re-allows arrow functions on `root.tsx` / `*.route.tsx`. Spread **after** `base` (see Gotchas).                                                                                           |
+| `frameworkRouting` | array (`...`) | Turns off `canonical/filename-match-exported` for routing dirs — `routes/**`, `app/**`, `pages/**` (Next.js), `src/routes/**` (SvelteKit), `src/pages/**` (Astro) — and re-allows arrow functions on `root.tsx` / `*.route.tsx`. Spread **after** `base` (see Gotchas).                             |
 | `testing`          | single        | Relaxes strict TypeScript rules and `import/no-extraneous-dependencies` for `**/*.{test,spec}.*`, `__tests__/**`, and setup files.                                                                                                                                                                  |
 
 **Opt-in** — pull in per project:
@@ -57,7 +59,7 @@ Pull in only the presets your project needs. Array presets are spread with `...`
 | `astro`           | array (`...`) | `eslint-plugin-astro/flat/recommended` plus Astro-specific overrides.                                               |
 | `sanity`          | array (`...`) | Schema property ordering for `*.schema.ts` and structure-file exceptions, for Sanity Studio projects.               |
 | `storybook`       | single        | Overrides for `**/*.stories.{ts,tsx}`.                                                                              |
-| `complexity`      | single        | Raises the cyclomatic-complexity threshold for `**/scripts/**`, where orchestration scripts run linearly.           |
+| `complexity`      | single        | Raises the cyclomatic-complexity threshold to 40 for `**/scripts/**`, where orchestration scripts run linearly.     |
 | `e2e`             | single        | Disables `react-hooks/rules-of-hooks` for `**/e2e/**` — Playwright `test.extend` callbacks are false positives.     |
 | `tableComponents` | single        | Disables `react/no-unstable-nested-components` for `**/*Table.tsx` — TanStack Table / Refine column-cell renderers. |
 
@@ -68,7 +70,7 @@ Pull in only the presets your project needs. Array presets are spread with `...`
 Two ordering rules are easy to get wrong and fail **silently** — the config still loads, but the intended override never wins:
 
 - **Spread `frameworkRouting` _after_ `...base`.** Its `func-style` override must come later in the array than the `preferences` block (which `base` includes), or `base` wins and the React Router 7 typed-export pattern breaks.
-- **`frameworkRouting` is `[frameworkRoutingRule, reactRouterExceptions]`** for the same reason — `reactRouterExceptions` has to sit after `preferences`. Don't reorder the pair.
+- **`frameworkRouting` is an ordered pair of configs** for the same reason — its second element (the React Router exceptions) must stay after its first, which in turn must follow `preferences`. If you ever expand the spread into individual elements, preserve their order.
 
 Full rationale (and the protomolecule issues behind it) is in [`CLAUDE.md`](CLAUDE.md).
 
