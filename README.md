@@ -59,7 +59,7 @@ Pull in only the presets your project needs. Array presets are spread with `...`
 | `astro`           | array (`...`) | `eslint-plugin-astro/flat/recommended` plus Astro-specific overrides.                                               |
 | `sanity`          | array (`...`) | Schema property ordering for `*.schema.ts` and structure-file exceptions, for Sanity Studio projects.               |
 | `storybook`       | single        | Overrides for `**/*.stories.{ts,tsx}`.                                                                              |
-| `complexity`      | single        | Raises the cyclomatic-complexity threshold to 40 for `**/scripts/**`, where orchestration scripts run linearly.     |
+| `complexity`      | array (`...`) | Raises the cyclomatic-complexity threshold to 40 for `**/scripts/**`, where orchestration scripts run linearly.     |
 | `e2e`             | single        | Disables `react-hooks/rules-of-hooks` for `**/e2e/**` — Playwright `test.extend` callbacks are false positives.     |
 | `tableComponents` | single        | Disables `react/no-unstable-nested-components` for `**/*Table.tsx` — TanStack Table / Refine column-cell renderers. |
 
