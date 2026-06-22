@@ -32,6 +32,23 @@ Two related sub-decisions, already settled in discussion:
 - **Squash merge stays.** Conventional Commits works with squash merges as long as the squash subject carries the conventional prefix (GitHub's "PR title" squash default makes this so). No change to how PRs are merged (incl. via Linear) is required — only a PR-title lint to keep the subject parseable.
 - **Root `CHANGELOG.md` can be dropped.** It duplicates the dated `changelog/` entries, which remain the curated, machine-readable record.
 
+### Merge strategy: squash vs merge commits
+
+The "squash merge stays" sub-decision above is the recommended path. If merge commits are ever preferred instead (e.g. for richer first-parent history), they are **compatible but carry specific costs** — recorded here so the trade-off isn't rediscovered.
+
+**The bump signal moves.** Under squash, the single squash commit = the PR title, so release-please reads one conventional subject (enforce **conventional PR titles**). Under merge commits, every branch commit lands on `main` and release-please parses **all of them** — the `Merge pull request #N` commit is non-conventional and ignored, so the bump comes from the individual commits. Enforcement therefore moves from the PR title to **every commit** (commitlint as a `commit-msg` hook becomes near-mandatory); the conventional-PR-title lint no longer drives versioning.
+
+**New risks merge commits introduce (single-package repo):**
+
+- **Silent over-bump.** A stray mid-branch `feat!:` or `BREAKING CHANGE:` footer inflates the version (potentially to a major) even when the PR as a whole is a patch. Squash exposes only the final title; merge commits expose every commit.
+- **Added-then-reverted over-bump.** A branch with `feat: X` then `revert: X` still counts the `feat:` → minor, despite zero net change. Squash collapses it.
+- **`/send-it` changes job.** Its derived conventional _PR title_ stops driving the version; it would instead need to guarantee conventional _commits_ on the branch, leaning on commitlint.
+- **Release-note noise.** If the `🏷️ Tag + GitHub release` notes are sourced from the commit log, every WIP commit leaks in. Mitigation: source notes from the dated `changelog/` entry, not the commit log.
+
+**Pipeline gotcha — do not disable squash at the repo level.** The orchestrator merges the **release PR** with `gh pr merge --squash` (pinned to the gate-checked SHA, ASW-334). `gh pr merge --squash` fails if squash merging isn't an allowed method. So the obvious way to force merge commits on features — turning squash off — would **break the orchestrator's release-PR merge**. Correct setup: keep **both** methods enabled, set the repo **default to "merge commit"** (so Linear/humans default to it for feature PRs), and let the orchestrator keep explicitly passing `--squash` for the release PR. Feature history stays rich; the release PR stays a single tidy `chore(main): release X` commit.
+
+**Net.** For a single-package repo, merge commits trade one clean enforcement point (PR title) for per-commit discipline plus the silent-over-bump risk, in exchange for richer history. Recommendation: **keep squash + conventional-PR-title** unless first-parent history genuinely matters; if adopting merge commits, the must-dos are (1) commitlint `commit-msg` hook, (2) keep squash enabled for the orchestrator, (3) set merge-commit as the repo default, (4) source release notes from `changelog/`.
+
 ## Considered Options
 
 ### A. release-please, strand A only (proposed)
