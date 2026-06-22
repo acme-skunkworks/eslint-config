@@ -1,6 +1,7 @@
 # Switch versioning from Changesets to Conventional Commits (release-please)
 
 **Status:** proposed
+**Linear:** [SK-371](https://linear.app/acme-skunkworks/issue/SK-371)
 
 This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope; the proceed / defer / reject decision is deferred to PR review on this ADR. **Nothing here has been actioned** — this is investigation and design only.
 
