@@ -1,9 +1,9 @@
 # Switch versioning from Changesets to Conventional Commits (release-please)
 
-**Status:** proposed
+**Status:** accepted (2026-06-22)
 **Linear:** [SK-371](https://linear.app/acme-skunkworks/issue/SK-371)
 
-This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope; the proceed / defer / reject decision is deferred to PR review on this ADR. **Nothing here has been actioned** — this is investigation and design only.
+This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope. **Decision: accepted — proceed with strand A** (2026-06-22); implementation is tracked in [SK-371](https://linear.app/acme-skunkworks/issue/SK-371) and **not yet actioned in code**.
 
 ## Context
 
@@ -51,7 +51,7 @@ The "squash merge stays" sub-decision above is the recommended path. If merge co
 
 ## Considered Options
 
-### A. release-please, strand A only (proposed)
+### A. release-please, strand A only (accepted)
 
 Swap the _bump mechanism_ and nothing else. Concretely:
 
@@ -79,7 +79,7 @@ Keep the current flow. If the real pain is _forgetting_ a changeset rather than 
 
 ## Decision
 
-**Open.** This ADR documents the trade-offs and the narrowed scope (strand A only); the proceed / defer / reject call is made at PR review. Option A is the concrete proposal; Option C is the defensible do-nothing; Option B is explicitly deferred.
+**Accepted — Option A (release-please, strand A only), 2026-06-22.** The deciding factor is **cross-repo consistency**: the org is standardising on release-please, which outweighs the "roughly lateral in isolation" assessment for this single package. Option C (stay on Changesets) was the defensible do-nothing; Option B (collapse the version-PR doubling / semantic-release) remains explicitly deferred. Implementation is tracked in [SK-371](https://linear.app/acme-skunkworks/issue/SK-371); this ADR records the decision, not its execution.
 
 ## Consequences
 

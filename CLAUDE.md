@@ -189,6 +189,8 @@ Two-stage lifecycle — finalisation rides inside the Changesets version PR (ASW
 
 ## Release workflow
 
+> **Planned change (accepted, not yet implemented):** [ADR 0002](docs/adr/0002-changesets-to-conventional-commits.md) / [SK-371](https://linear.app/acme-skunkworks/issue/SK-371) — versioning is moving from Changesets to Conventional Commits ([release-please](https://github.com/googleapis/release-please)), strand A only (bump mechanism swaps; topology + security unchanged). The flow described below is still the **live** Changesets-based one until SK-371 lands; this section will be rewritten then.
+
 There are two release modes — know which one you're in.
 
 ### Day-to-day releases (CI via OIDC)
