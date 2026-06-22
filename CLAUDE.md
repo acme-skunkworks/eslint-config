@@ -189,6 +189,8 @@ Two-stage lifecycle — finalisation rides inside the Changesets version PR (ASW
 
 ## Release workflow
 
+> **Proposed change (not yet decided):** [ADR 0002](docs/adr/0002-changesets-to-conventional-commits.md) / [SK-371](https://linear.app/acme-skunkworks/issue/SK-371) evaluates switching versioning from Changesets to Conventional Commits ([release-please](https://github.com/googleapis/release-please)). Status: `proposed` — the working default is to stay on Changesets, so everything below describes the live flow. Revisit this section if that ADR lands.
+
 There are two release modes — know which one you're in.
 
 ### Day-to-day releases (CI via OIDC)
