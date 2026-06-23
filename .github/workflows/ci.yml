@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+    # `edited` is included so the conventional-PR-title lint (pr-title job) and
+    # the changelog-completeness gate re-run when a title is corrected — the PR
+    # title is the release-please bump signal (SK-371), so a stale pass on an
+    # old title would be unsafe. The default set is opened/synchronize/reopened.
+    types: [opened, edited, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,11 +20,12 @@ permissions:
 jobs:
   build-and-lint:
     name: 🔬 Build & Lint
-    # Deliberately NOT skipped on changeset-release/* — this job is the required
-    # status check that gates the version PR (ASW-311). The road-runner-bot
-    # orchestrator reopens the version PR to trigger this run, then merges once
-    # it's green. The version PR's only generated file, CHANGELOG.md, is excluded
-    # from lint:md (see package.json) so changesets output can't redden the gate.
+    # Deliberately NOT skipped on the release-please branch — this job is the
+    # required status check that gates the release PR (ASW-311). The
+    # road-runner-bot orchestrator reopens the release PR to trigger this run,
+    # then merges once it's green. The release PR's title is a non-release
+    # `chore: release …`, so the changelog-completeness step below is a no-op on
+    # it.
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -56,19 +62,58 @@ jobs:
       - name: 📝 Lint Markdown
         run: pnpm run lint:md
 
-      # In build-and-lint (not infra) so it also runs on the changeset-release/*
-      # version PR, where finalise-changelog.ts rewrites the entries — that's
+      # In build-and-lint (not infra) so it also runs on the release-please
+      # branch, where finalise-changelog.ts rewrites the entries — that's
       # exactly where finalised frontmatter/body must be validated before merge.
       - name: 📓 Validate changelog entries
         run: pnpm validate:changelog
 
-      - name: 📝 Changeset status
-        run: pnpm changeset status --since=origin/${{ github.base_ref }}
-        continue-on-error: true
+      # Changelog-completeness gate (SK-371): a release-triggering PR title
+      # (feat/fix/breaking) must carry a dated changelog/ entry. Restores the
+      # no-changeset-no-release coupling now that the bump is inferred from the
+      # PR title. Non-release titles (docs/chore/ci/…) — including the
+      # release-please PR's own `chore: release …` — are a clean pass.
+      - name: 📓 Changelog completeness
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.base_ref }}
+        run: pnpm tsx infrastructure/scripts/check-changelog-completeness.ts
+
+  # Conventional-PR-title lint (SK-371). The repo squash-merges, so the PR title
+  # IS the squash subject release-please parses to decide the bump — a mistyped
+  # prefix silently ships the wrong semver. This guards the format. Runs on every
+  # PR including the release-please PR (whose `chore: release …` title is a valid
+  # conventional subject, so it passes cleanly — no skip needed).
+  pr-title:
+    name: 🔠 PR title (Conventional Commits)
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: 🔠 Lint PR title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Mirror the Conventional Commits types /send-it emits. Only feat / fix
+          # / a `!` breaking marker are release-triggering (release-please default
+          # node bump table); the rest are non-release types.
+          types: |
+            feat
+            fix
+            docs
+            chore
+            ci
+            refactor
+            perf
+            test
+            build
+            style
+            revert
 
   yaml-lint:
     name: 📝 YAML & Workflows
-    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
@@ -112,7 +157,7 @@ jobs:
 
   infra:
     name: 🧪 Infrastructure scripts
-    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
