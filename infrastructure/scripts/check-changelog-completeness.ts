@@ -15,7 +15,7 @@
 // Reads changed files from `git diff --name-only origin/<BASE_REF>...HEAD`.
 // Pure functions live exported for vitest.
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const RELEASE_TRIGGERING_TYPE = /^(feat|fix)(\([^)]+\))?:/;
 const BREAKING_SUBJECT = /^[a-z]+(\([^)]+\))?!:/;
@@ -59,9 +59,11 @@ export function checkCompleteness(
 }
 
 function readChangedFiles(baseRef: string): string[] {
-  const out = execSync(`git diff --name-only origin/${baseRef}...HEAD`, {
-    encoding: "utf8",
-  });
+  const out = execFileSync(
+    "git",
+    ["diff", "--name-only", `origin/${baseRef}...HEAD`],
+    { encoding: "utf8" },
+  );
   return out
     .split("\n")
     .map((line) => line.trim())
