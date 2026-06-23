@@ -19,7 +19,7 @@
 #
 # Idempotent: if package@version already exists on GitHub Packages, exit 0
 # instead of re-publishing (which would 409). Combined with the workflow's
-# pending-changesets gate, this keeps retries and any non-release run safe.
+# version-vs-tag gate, this keeps retries and any non-release run safe.
 #
 # Inputs (all from env, set by the workflow):
 #   NODE_AUTH_TOKEN              — GitHub Packages auth (the GITHUB_TOKEN); read
