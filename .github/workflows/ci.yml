@@ -84,8 +84,15 @@ jobs:
   # prefix silently ships the wrong semver. This guards the format. Runs on every
   # PR including the release-please PR (whose `chore: release …` title is a valid
   # conventional subject, so it passes cleanly — no skip needed).
+  #
+  # The job `name` below IS the GitHub status-check context, and it is the
+  # estate-canonical string shared verbatim with octavo and the other release
+  # repos (SK-400) so SK-405 can pin ONE required-check context across the whole
+  # estate. It intentionally breaks this repo's emoji-prefixed job-name
+  # convention — do NOT "tidy" it back; the exact text must stay stable or the
+  # estate-wide required-check pin breaks.
   pr-title:
-    name: 🔠 PR title (Conventional Commits)
+    name: Validate PR title is a Conventional Commit
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
