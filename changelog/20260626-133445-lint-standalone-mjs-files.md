@@ -4,18 +4,23 @@ release_note: >-
   `base` now applies Node + ES globals to standalone `.mjs` files — the ESM
   counterpart to the existing `.cjs` handling — so plain ES-module scripts lint
   without spurious `no-undef` errors on `console` / `process`.
-version:
-created_at: "2026-06-26T13:34:45Z"
-merged_at:
+version: 1.1.0
+created_at: '2026-06-26T13:34:45Z'
+merged_at: '2026-06-26T14:32:52Z'
 branch: sk-439-support-linting-standalone-mjs-skill-files-validateextend
-pr:
-commit:
-merge_strategy:
+pr: 68
+commit: e9991e9
+merge_strategy: squash
 author: rob@acmeskunkworks.io
 co_authors: []
 category: feature
 breaking: false
-issues: ["SK-439"]
+issues:
+  - SK-439
+stats:
+  loc_added: 65
+  loc_removed: 7
+  files_changed: 4
 ---
 
 ## Added
