@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 // Changelog-completeness gate (SK-371). A release-triggering PR title
-// (`feat`/`fix`/breaking) MUST carry a dated `changelog/` entry. This restores
+// (`feat`/`fix`/`perf`/`revert`/breaking) MUST carry a dated `changelog/` entry. This restores
 // the coupling Changesets gave for free — no changeset → no release — now that
 // release-please infers the bump from the Conventional-Commit PR title rather
 // than an explicit file. Wired into ci.yml's build-and-lint job.
@@ -58,7 +58,7 @@ export function checkCompleteness(
 
   return {
     ok: false,
-    reason: `PR title "${prTitle}" triggers a release (feat/fix/breaking) but no changelog/*.md entry is present in the diff vs the base branch. Run /send-it (or add a dated changelog/ entry) so the release carries notes.`,
+    reason: `PR title "${prTitle}" triggers a release (feat/fix/perf/revert/breaking) but no changelog/*.md entry is present in the diff vs the base branch. Run /send-it (or add a dated changelog/ entry) so the release carries notes.`,
   };
 }
 
