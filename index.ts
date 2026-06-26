@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { astro } from "./rules/astro.js";
 import { commonjs } from "./rules/commonjs.js";
+import { esm } from "./rules/esm.js";
 import { frameworkRouting as frameworkRoutingRule } from "./rules/frameworkRouting.js";
 import { ignoredFileAndFolders } from "./rules/ignoredFileAndFolders.js";
 import { packageJson } from "./rules/packageJson.js";
@@ -29,7 +30,7 @@ const importXAlias: any = {
 /**
  * Base preset — the "you almost always want this" stack:
  * plugin-alias hack, global ignores, the canonical baseline, packageJson
- * lint config, commonjs file overrides, and the big preferences block
+ * lint config, commonjs + esm file overrides, and the big preferences block
  * (top-level type imports, func-style, prettier, import resolver, etc.).
  */
 export const base: Linter.Config[] = [
@@ -40,6 +41,7 @@ export const base: Linter.Config[] = [
   ...(eslintConfigCanonicalAuto as Linter.Config[]),
   packageJson,
   commonjs,
+  esm,
   preferences,
 ];
 
