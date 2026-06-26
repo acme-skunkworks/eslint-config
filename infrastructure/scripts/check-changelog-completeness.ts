@@ -1,13 +1,14 @@
 #!/usr/bin/env -S npx tsx
 // Changelog-completeness gate (SK-371). A release-triggering PR title
-// (`feat`/`fix`/breaking) MUST carry a dated `changelog/` entry. This restores
+// (`feat`/`fix`/`perf`/`revert`/breaking) MUST carry a dated `changelog/` entry. This restores
 // the coupling Changesets gave for free — no changeset → no release — now that
 // release-please infers the bump from the Conventional-Commit PR title rather
 // than an explicit file. Wired into ci.yml's build-and-lint job.
 //
-// "Release-triggering" mirrors release-please's default node bump table exactly:
-// only `feat` (minor), `fix` (patch), and a `!` breaking marker (major) cut a
-// release; `docs`/`chore`/`ci`/`refactor`/`perf`/`test`/`build`/`style` do not.
+// "Release-triggering" mirrors release-please's default node bump table:
+// `feat` (minor), `fix`/`perf`/`revert` (patch), and a `!` breaking marker
+// (major) cut a release; `docs`/`chore`/`ci`/`refactor`/`test`/`build`/`style`
+// do not.
 //
 // Inputs (env, set by the workflow):
 //   PR_TITLE — the pull request title (github.event.pull_request.title)
@@ -17,7 +18,7 @@
 
 import { execFileSync } from "node:child_process";
 
-const RELEASE_TRIGGERING_TYPE = /^(feat|fix)(\([^)]+\))?:/;
+const RELEASE_TRIGGERING_TYPE = /^(feat|fix|perf|revert)(\([^)]+\))?:/;
 const BREAKING_SUBJECT = /^[a-z]+(\([^)]+\))?!:/;
 const CHANGELOG_ENTRY = /^changelog\/.+\.md$/;
 
@@ -32,7 +33,10 @@ export function hasChangelogEntry(changedFiles: readonly string[]): boolean {
   );
 }
 
-export type CompletenessResult = { ok: boolean; reason: string };
+export type CompletenessResult = {
+  ok: boolean;
+  reason: string;
+};
 
 export function checkCompleteness(
   prTitle: string,
@@ -54,7 +58,7 @@ export function checkCompleteness(
 
   return {
     ok: false,
-    reason: `PR title "${prTitle}" triggers a release (feat/fix/breaking) but no changelog/*.md entry is present in the diff vs the base branch. Run /send-it (or add a dated changelog/ entry) so the release carries notes.`,
+    reason: `PR title "${prTitle}" triggers a release (feat/fix/perf/revert/breaking) but no changelog/*.md entry is present in the diff vs the base branch. Run /send-it (or add a dated changelog/ entry) so the release carries notes.`,
   };
 }
 
