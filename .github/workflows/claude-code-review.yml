@@ -44,7 +44,7 @@ jobs:
         id: claude-review
         # If startup crashes with an AJV schema error, see anthropics/claude-code-action#947
         # and pin to a known-good version (e.g. v1.0.51).
-        uses: anthropics/claude-code-action@51705da45eecce209d4700538bf8377d5b5fc695 # v1.0.152
+        uses: anthropics/claude-code-action@521136812280ae7ef256e06045655b9da02793f0 # v1.0.158
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # NB: this action version (v1.0.133) has NO marketplace ref-pin
