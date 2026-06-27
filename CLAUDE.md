@@ -50,6 +50,27 @@ pnpm validate:changelog  # validate dated changelog/ entries (CI: build-and-lint
 
 Node 22 required (`.nvmrc`, `engines.node: ">=22"`, `engine-strict=true` in `.npmrc`).
 
+## Agent skills
+
+The shipping and housekeeping commands are provided by the shared
+[`@acme-skunkworks/agent-skills`](https://github.com/acme-skunkworks/agent-skills)
+bundles, installed via [skills.sh](https://skills.sh) under `.claude/skills/`
+(and mirrored to `.agents/skills/` for Cursor). They replace the previous bespoke
+`.claude/commands/send-it.md`:
+
+- `/send-it` — commit → preflight → dated changelog entry → Conventional-Commit PR
+  title → push → draft PR → Linear → In Review. Delegates to `preflight`,
+  `changelog`, and `linear-sync`.
+- `/preflight` — change-gated, branch-scoped lint preflight.
+- `/changelog` — author/refresh/validate the dated `changelog/` entry.
+- `/linear-sync` — transition linked Linear issues.
+- `/cleanup-repo` — prune merged branches, worktrees, filesystem cruft.
+- `/triage-pr` — drive a PR from draft-with-failing-CI to merge-ready.
+
+Each skill reads its own `config.json` (reconciled by `initialise-skills` from
+this repo's facts). Re-install or upgrade with `npx skills add … --copy`; re-run
+`initialise-skills` afterwards to pick up new config keys.
+
 ## Local hooks
 
 `pnpm install` runs `prepare` (`husky`), which installs the hooks under `.husky/`. Three hooks fire:
@@ -149,7 +170,7 @@ CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh`
 
 > The changelog scripts use `gray-matter` (a devDependency) and the validator is a long flat list of schema checks, so `eslint.config.ts` scopes a `devDependencies: true` + `complexity: off` override to `infrastructure/**`.
 
-When adding workflow-extracted tooling, write the test first, then wire from YAML as a one-liner: `run: pnpm tsx infrastructure/scripts/<name>.ts` or `run: bash infrastructure/scripts/<name>.sh`. Slash-command-only helpers under `infrastructure/send-it/` are invoked from `.claude/commands/send-it.md` instead.
+When adding workflow-extracted tooling, write the test first, then wire from YAML as a one-liner: `run: pnpm tsx infrastructure/scripts/<name>.ts` or `run: bash infrastructure/scripts/<name>.sh`. (The bespoke `/send-it` slash command and its `infrastructure/send-it/` helpers have been superseded by the shared `send-it` agent skill — see [Agent skills](#agent-skills); the now-orphaned `infrastructure/send-it/` helpers are slated for follow-up removal.)
 
 ## Architecture
 
