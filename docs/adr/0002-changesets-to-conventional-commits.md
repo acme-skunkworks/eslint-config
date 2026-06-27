@@ -1,13 +1,13 @@
 # Switch versioning from Changesets to Conventional Commits (release-please)
 
 **Status:** accepted (2026-06-22)
-**Linear:** [SK-371](https://linear.app/acme-skunkworks/issue/SK-371)
+**Linear:** [A-371](https://linear.app/acme-skunkworks/issue/A-371)
 
-This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope. **Decision: accepted — proceed with strand A** (2026-06-22); implementation is tracked in [SK-371](https://linear.app/acme-skunkworks/issue/SK-371) and **not yet actioned in code**.
+This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope. **Decision: accepted — proceed with strand A** (2026-06-22); implementation is tracked in [A-371](https://linear.app/acme-skunkworks/issue/A-371) and **not yet actioned in code**.
 
 ## Context
 
-Versioning today is Changesets-driven. A contributor (via `/send-it`) writes an explicit `.changeset/<slug>.md` declaring the bump and prose; the private **release-orchestrator** later runs `pnpm changeset:version`, opens the version PR, and on a later tick squash-merges it; that merge fires `release.yml`, which publishes the prebuilt tarball to npm via OIDC Trusted Publishing (+ provenance) and mirrors it to GitHub Packages. The whole pipeline has been hardened deliberately (ASW-312/320/323/325/326/328): the org-compromise-grade App key never touches public CI, build-time code runs only in an unprivileged `build` job, and both publish legs ship one byte-identical, attested tarball.
+Versioning today is Changesets-driven. A contributor (via `/send-it`) writes an explicit `.changeset/<slug>.md` declaring the bump and prose; the private **release-orchestrator** later runs `pnpm changeset:version`, opens the version PR, and on a later tick squash-merges it; that merge fires `release.yml`, which publishes the prebuilt tarball to npm via OIDC Trusted Publishing (+ provenance) and mirrors it to GitHub Packages. The whole pipeline has been hardened deliberately (A-312/320/323/325/326/328): the org-compromise-grade App key never touches public CI, build-time code runs only in an unprivileged `build` job, and both publish legs ship one byte-identical, attested tarball.
 
 The motivating question was "should we move to Conventional Commits?" Rubber-ducking it surfaced that the question braids together **four independent decisions** that were being treated as one:
 
@@ -45,7 +45,7 @@ The "squash merge stays" sub-decision above is the recommended path. If merge co
 - **`/send-it` changes job.** Its derived conventional _PR title_ stops driving the version; it would instead need to guarantee conventional _commits_ on the branch, leaning on commitlint.
 - **Release-note noise.** If the `🏷️ Tag + GitHub release` notes are sourced from the commit log, every WIP commit leaks in. Mitigation: source notes from the dated `changelog/` entry, not the commit log.
 
-**Pipeline gotcha — do not disable squash at the repo level.** The orchestrator merges the **release PR** with `gh pr merge --squash` (pinned to the gate-checked SHA, ASW-334). `gh pr merge --squash` fails if squash merging isn't an allowed method. So the obvious way to force merge commits on features — turning squash off — would **break the orchestrator's release-PR merge**. Correct setup: keep **both** methods enabled, set the repo **default to "merge commit"** (so Linear/humans default to it for feature PRs), and let the orchestrator keep explicitly passing `--squash` for the release PR. Feature history stays rich; the release PR stays a single tidy `chore(main): release X` commit.
+**Pipeline gotcha — do not disable squash at the repo level.** The orchestrator merges the **release PR** with `gh pr merge --squash` (pinned to the gate-checked SHA, A-334). `gh pr merge --squash` fails if squash merging isn't an allowed method. So the obvious way to force merge commits on features — turning squash off — would **break the orchestrator's release-PR merge**. Correct setup: keep **both** methods enabled, set the repo **default to "merge commit"** (so Linear/humans default to it for feature PRs), and let the orchestrator keep explicitly passing `--squash` for the release PR. Feature history stays rich; the release PR stays a single tidy `chore(main): release X` commit.
 
 **Net.** For a single-package repo, merge commits trade one clean enforcement point (PR title) for per-commit discipline plus the silent-over-bump risk, in exchange for richer history. Recommendation: **keep squash + conventional-PR-title** unless first-parent history genuinely matters; if adopting merge commits, the must-dos are (1) commitlint `commit-msg` hook, (2) keep squash enabled for the orchestrator, (3) set merge-commit as the repo default, (4) source release notes from `changelog/`.
 
@@ -61,7 +61,7 @@ Swap the _bump mechanism_ and nothing else. Concretely:
 - **`ci.yml`** gains two checks: a **conventional-PR-title lint** (e.g. `amannn/action-semantic-pull-request`) and a **changelog-completeness gate** (if the PR's type triggers a release, a new `changelog/*.md` must be present).
 - New committed config: `release-please-config.json` + `.release-please-manifest.json`. `.changeset/` is deleted.
 
-**Pros.** Achieves the goal (off Changesets, onto Conventional Commits). **Fresh `package.json`** — no staleness. App-key isolation, ASW-328 build-once, the `npm-release` environment, ref guards, the dated `changelog/` system, and squash-via-Linear all **unchanged** → no security re-review. Identical topology to today, so it ports cleanly across every org package.
+**Pros.** Achieves the goal (off Changesets, onto Conventional Commits). **Fresh `package.json`** — no staleness. App-key isolation, A-328 build-once, the `npm-release` environment, ref guards, the dated `changelog/` system, and squash-via-Linear all **unchanged** → no security re-review. Identical topology to today, so it ports cleanly across every org package.
 
 **Cons.** Conventional Commits **decouples "a release happens" from "the changelog entry exists"** — which Changesets coupled for free (no changeset → no release). This must be re-enforced in CI (the new completeness gate). The bump source moves from a file you write to the PR title you write (lower friction, but a new failure mode: a mistyped prefix silently ships the wrong semver — mitigated by the title lint). Two new `ci.yml` checks and two new committed config files to maintain. One new orchestrator ordering rule (run `finalise-changelog` _after_ release-please each tick, since release-please owns/force-updates its release branch — safe because finalise is idempotent).
 
@@ -69,7 +69,7 @@ Swap the _bump mechanism_ and nothing else. Concretely:
 
 Move to a no-version-PR topology so a feature merge publishes directly. Removes one commit per release.
 
-**Why rejected for now.** Drags in **stale `package.json`** (version lives only in tags/npm/`changelog/`) and an **App-key security re-review** (versioning would move to public CI). The naive single-job form also _regresses ASW-328_ (the large semantic-release dependency graph runs adjacent to the OIDC publish credential); preserving ASW-328 requires a dry-run-decide / build / minimal-publish split that adds back the complexity the option was meant to remove. The prize — one fewer commit per release — is cosmetic. Recorded here so it isn't re-proposed without weighing these costs.
+**Why rejected for now.** Drags in **stale `package.json`** (version lives only in tags/npm/`changelog/`) and an **App-key security re-review** (versioning would move to public CI). The naive single-job form also _regresses ASW-328_ (the large semantic-release dependency graph runs adjacent to the OIDC publish credential); preserving A-328 requires a dry-run-decide / build / minimal-publish split that adds back the complexity the option was meant to remove. The prize — one fewer commit per release — is cosmetic. Recorded here so it isn't re-proposed without weighing these costs.
 
 ### C. Stay on Changesets
 
@@ -79,13 +79,13 @@ Keep the current flow. If the real pain is _forgetting_ a changeset rather than 
 
 ## Decision
 
-**Accepted — Option A (release-please, strand A only), 2026-06-22.** The deciding factor is **cross-repo consistency**: the org is standardising on release-please, which outweighs the "roughly lateral in isolation" assessment for this single package. Option C (stay on Changesets) was the defensible do-nothing; Option B (collapse the version-PR doubling / semantic-release) remains explicitly deferred. Implementation is tracked in [SK-371](https://linear.app/acme-skunkworks/issue/SK-371); this ADR records the decision, not its execution.
+**Accepted — Option A (release-please, strand A only), 2026-06-22.** The deciding factor is **cross-repo consistency**: the org is standardising on release-please, which outweighs the "roughly lateral in isolation" assessment for this single package. Option C (stay on Changesets) was the defensible do-nothing; Option B (collapse the version-PR doubling / semantic-release) remains explicitly deferred. Implementation is tracked in [A-371](https://linear.app/acme-skunkworks/issue/A-371); this ADR records the decision, not its execution.
 
 ## Consequences
 
 - **For consumers:** nothing changes — same package, same npm/provenance, version still visible in `package.json`.
 - **If we proceed (A):** follow-up work is (1) `release-please-config.json` + `.release-please-manifest.json`; (2) the `/send-it` change (drop changeset write, set conventional PR title); (3) the orchestrator change (`release-please release-pr` + post-step `finalise-changelog`); (4) the `release.yml` gate change (version-vs-tag); (5) two new `ci.yml` checks (PR-title lint, changelog-completeness); (6) delete `.changeset/`, drop root `CHANGELOG.md`; (7) roll the same change across the other org packages. No change to the privileged release jobs or the security posture.
-- **If we defer/reject (B/C):** the pipeline continues unchanged; the strand-B costs (stale `package.json`, App-key re-review, ASW-328 regression risk) are the gating conditions to revisit before ever pursuing the single-step topology.
+- **If we defer/reject (B/C):** the pipeline continues unchanged; the strand-B costs (stale `package.json`, App-key re-review, A-328 regression risk) are the gating conditions to revisit before ever pursuing the single-step topology.
 
 ## References
 

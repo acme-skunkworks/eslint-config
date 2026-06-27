@@ -1,7 +1,7 @@
 # Investigate oxlint-based sibling repo
 
 **Status:** proposed
-**Linear:** [ASW-223](https://linear.app/acme-skunkworks/issue/ASW-223)
+**Linear:** [A-223](https://linear.app/acme-skunkworks/issue/A-223)
 
 This ADR investigates whether to spin up a sibling repository derived from `@acme-skunkworks/eslint-config` that replaces ESLint with [oxlint](https://oxc.rs/docs/guide/usage/linter.html). It documents the trade-offs and considered options; the proceed / defer / reject decision is deferred to PR review on this ADR.
 
