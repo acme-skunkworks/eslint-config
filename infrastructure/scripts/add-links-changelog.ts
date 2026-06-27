@@ -8,7 +8,11 @@
 
 const WORKSPACE = "acme-skunkworks";
 const TEAM_KEYS = ["A"];
-const ISSUE_RE = new RegExp(`\\b(?:${TEAM_KEYS.join("|")})-\\d+\\b`, "g");
+// Wrap in a non-capturing group only when there's a real alternation; a lone
+// key wrapped in (?:…) trips regexp/no-useless-non-capturing-group.
+const TEAM_KEYS_ALT =
+  TEAM_KEYS.length > 1 ? `(?:${TEAM_KEYS.join("|")})` : TEAM_KEYS[0];
+const ISSUE_RE = new RegExp(`\\b${TEAM_KEYS_ALT}-\\d+\\b`, "g");
 const FENCE_RE = /```[\s\S]*?```/g;
 const INLINE_CODE_RE = /`[^`]*`/g;
 const ALREADY_LINKED_RE = /\[[^\]]*\]\([^)]*\)/g;
