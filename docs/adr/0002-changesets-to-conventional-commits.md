@@ -91,7 +91,7 @@ Keep the current flow. If the real pain is _forgetting_ a changeset rather than 
 
 - Release pipeline & security model: `CLAUDE.md` (Release workflow, Cross-boundary hardening), `.github/workflows/release.yml`
 - Dated changelog system: `changelog/README.md`, `infrastructure/scripts/finalise-changelog.ts`
-- `/send-it` + changeset derivation: `.claude/commands/send-it.md`, `infrastructure/send-it/derive-changeset.ts`
+- `/send-it` + bump derivation: `.claude/skills/send-it/SKILL.md`, `.claude/skills/send-it/scripts/derive-bump.mjs` (the shared bundle that superseded the bespoke `infrastructure/send-it/derive-changeset.ts`)
 - ADR format: `.claude/skills/grill-with-docs/ADR-FORMAT.md`
 - release-please: <https://github.com/googleapis/release-please>
 - Conventional Commits: <https://www.conventionalcommits.org/>
