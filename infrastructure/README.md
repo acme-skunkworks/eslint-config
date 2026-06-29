@@ -7,11 +7,17 @@ Workflow logic extracted from `.github/workflows/*.yml` plus shared dev-tooling 
 ```
 infrastructure/
   scripts/                          # executable logic. one file = one purpose
-    ensure-yamllint.sh              # extracted from .github/workflows/ci.yml
-    ensure-actionlint.sh            # extracted from .github/workflows/ci.yml
-    ensure-bats.sh                  # extracted from .github/workflows/ci.yml
+    ensure-yamllint.sh              # ci.yml yamllint step (hash-pinned pip install)
+    ensure-actionlint.sh            # ci.yml actionlint step (SHA-pinned + sha256-verified install)
+    ensure-bats.sh                  # ci.yml bats install step (sha256-verified tarball)
     publish-via-raw-npm.sh          # release.yml npm publish step (bypasses pnpm)
     publish-to-github-packages.sh   # release.yml publish-github-packages job (token auth, attested tarball)
+    validate-changelog.ts           # ci.yml build-and-lint validate:changelog (schema check)
+    check-changelog-completeness.ts # ci.yml build-and-lint changelog-completeness gate (A-371)
+    finalise-changelog.ts           # orchestrator step after release-please release-pr (= pnpm changelog:finalise)
+    enrich-changelog.ts             # pure lib used by finalise (fills entry stats)
+    add-links-changelog.ts          # pure lib used by finalise (rewrites Linear IDs to links)
+    stamp-changelog-version.ts      # pure lib used by finalise (stamps the bumped version)
   tests/
     *.test.ts                       # vitest, run via `pnpm test`
     *.bats                          # bats-core, run via `pnpm test:sh`
