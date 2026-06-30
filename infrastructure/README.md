@@ -7,13 +7,11 @@ Workflow logic extracted from `.github/workflows/*.yml` plus shared dev-tooling 
 ```
 infrastructure/
   scripts/                          # executable logic. one file = one purpose
-    ensure-yamllint.sh              # ci.yml yamllint step (hash-pinned pip install)
-    ensure-actionlint.sh            # ci.yml actionlint step (SHA-pinned + sha256-verified install)
-    ensure-bats.sh                  # ci.yml bats install step (sha256-verified tarball)
-    publish-via-raw-npm.sh          # release.yml npm publish step (bypasses pnpm)
-    publish-to-github-packages.sh   # release.yml publish-github-packages job (token auth, attested tarball)
-    validate-changelog.ts           # ci.yml build-and-lint validate:changelog (schema check)
-    check-changelog-completeness.ts # ci.yml build-and-lint changelog-completeness gate (A-371)
+    ensure-yamllint.sh              # pre-commit yamllint (hash-pinned pip install)
+    ensure-actionlint.sh            # pre-commit actionlint (SHA-pinned + sha256-verified install)
+    ensure-bats.sh                  # reusable-build-test bats lane (sha256-verified tarball)
+    validate-changelog.ts           # reusable-lint changelog lane (schema check)
+    check-changelog-completeness.ts # ci.yml changelog-completeness gate (A-371)
     finalise-changelog.ts           # orchestrator step after release-please release-pr (= pnpm changelog:finalise)
     enrich-changelog.ts             # pure lib used by finalise (fills entry stats)
     add-links-changelog.ts          # pure lib used by finalise (rewrites Linear IDs to links)
@@ -47,7 +45,7 @@ pnpm test:sh       # bats; locally prints install hint and exits 0 if bats is mi
 pnpm lint:sh       # shellcheck; same skip-with-hint contract locally
 ```
 
-CI runs all four unconditionally in the `infra` job.
+CI runs vitest, shellcheck, and bats via the shared `reusable-build-test.yml` caller.
 
 ## Adding a new script
 

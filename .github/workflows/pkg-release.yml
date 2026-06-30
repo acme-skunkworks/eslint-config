@@ -1,0 +1,24 @@
+name: Package release
+
+on:
+  push:
+    branches:
+      - main
+  # No workflow_dispatch (A-326). Re-run a failed release via "Re-run jobs" on
+  # the original push run.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-pkg-release.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    with:
+      npm-scope: "@acme-skunkworks"
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
+      packages: write
+      attestations: write
