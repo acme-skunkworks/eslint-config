@@ -2,10 +2,11 @@ name: CI
 
 on:
   pull_request:
-    # `edited` is included so the conventional-PR-title lint (pr-title job) and
-    # the changelog-completeness gate re-run when a title is corrected — the PR
-    # title is the release-please bump signal (SK-371), so a stale pass on an
-    # old title would be unsafe. The default set is opened/synchronize/reopened.
+    # `edited` is included so the changelog-completeness gate re-runs when a
+    # title is corrected — the PR title is the release-please bump signal
+    # (SK-371), so a stale pass on an old title would be unsafe. The
+    # conventional-PR-title lint lives in validate-pr-title.yml (A-430) and
+    # re-runs on `edited` there too.
     types: [opened, edited, synchronize, reopened]
 
 concurrency:
@@ -17,15 +18,51 @@ concurrency:
 permissions:
   contents: read
 
+# Wave 2 reference consumer (A-588/A-592): lint + build-test run through the
+# estate's shared reusable workflows, SHA-pinned to v1.0.0 so Dependabot
+# bumps them together. The changelog-completeness gate and the `GO/NO GO`
+# aggregator stay local (A-418). PR-title validation is a separate workflow
+# (validate-pr-title.yml, A-430) and is required directly by the estate ruleset.
 jobs:
-  build-and-lint:
-    name: 🔬 Build & Lint
-    # Deliberately NOT skipped on the release-please branch — this job is the
-    # required status check that gates the release PR (ASW-311). The
-    # road-runner-bot orchestrator reopens the release PR to trigger this run,
-    # then merges once it's green. The release PR's title is a non-release
-    # `chore: release …`, so the changelog-completeness step below is a no-op on
-    # it.
+  config:
+    name: ⚙️ Load repo config
+    runs-on: ubuntu-latest
+    outputs:
+      node_version_file: ${{ steps.repo.outputs.node_version_file }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: ⚙️ Load repo config
+        id: repo
+        uses: ./.github/actions/load-repo-config
+
+  lint:
+    needs: config
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-lint.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    with:
+      node-version-file: ${{ needs.config.outputs.node_version_file }}
+      eslint-args: index.ts rules infrastructure/scripts
+      markdown-globs: |
+        **/*.{md,mdx}
+        !**/node_modules/**
+      changelog-script: validate:changelog
+
+  build-test:
+    needs: config
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-build-test.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    with:
+      node-version-file: ${{ needs.config.outputs.node_version_file }}
+      typecheck: false
+      shellcheck-paths: "infrastructure/scripts .husky/pre-commit .husky/pre-push .husky/commit-msg"
+      bats: true
+
+  changelog-completeness:
+    name: 📓 Changelog completeness
+    needs: config
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -34,10 +71,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
-
-      - name: ⚙️ Load repo config
-        id: repo
-        uses: ./.github/actions/load-repo-config
+          persist-credentials: false
 
       - name: 📦 Install pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v4.4.0
@@ -47,175 +81,32 @@ jobs:
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version-file: ${{ steps.repo.outputs.node_version_file }}
+          node-version-file: ${{ needs.config.outputs.node_version_file }}
           cache: pnpm
 
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🏗️ Build
-        run: pnpm run build
-
-      - name: 🔬 Lint
-        run: pnpm run lint
-
-      - name: 📝 Lint Markdown
-        run: pnpm run lint:md
-
-      # In build-and-lint (not infra) so it also runs on the release-please
-      # branch, where finalise-changelog.ts rewrites the entries — that's
-      # exactly where finalised frontmatter/body must be validated before merge.
-      - name: 📓 Validate changelog entries
-        run: pnpm validate:changelog
-
-      # Changelog-completeness gate (SK-371): a release-triggering PR title
-      # (feat/fix/breaking) must carry a dated changelog/ entry. Restores the
-      # no-changeset-no-release coupling now that the bump is inferred from the
-      # PR title. Non-release titles (docs/chore/ci/…) — including the
-      # release-please PR's own `chore: release …` — are a clean pass.
       - name: 📓 Changelog completeness
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BASE_REF: ${{ github.base_ref }}
         run: pnpm tsx infrastructure/scripts/check-changelog-completeness.ts
 
-  # Conventional-PR-title lint (SK-371). The repo squash-merges, so the PR title
-  # IS the squash subject release-please parses to decide the bump — a mistyped
-  # prefix silently ships the wrong semver. This guards the format. Runs on every
-  # PR including the release-please PR (whose `chore: release …` title is a valid
-  # conventional subject, so it passes cleanly — no skip needed).
-  #
-  # The job `name` below IS the GitHub status-check context, and it is the
-  # estate-canonical string shared verbatim with octavo and the other release
-  # repos (SK-400) so SK-405 can pin ONE required-check context across the whole
-  # estate. It intentionally breaks this repo's emoji-prefixed job-name
-  # convention — do NOT "tidy" it back; the exact text must stay stable or the
-  # estate-wide required-check pin breaks.
-  pr-title:
-    name: Validate PR title is a Conventional Commit
+  go-no-go:
+    name: GO/NO GO
+    needs: [config, lint, build-test, changelog-completeness]
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      contents: read
     steps:
-      - name: 🔠 Lint PR title
-        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+      - name: ⚖️ Verdict
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Mirror the Conventional Commits types /send-it emits. feat / fix /
-          # perf / revert and a `!` breaking marker are release-triggering
-          # (release-please default node bump table); the rest are non-release types.
-          types: |
-            feat
-            fix
-            docs
-            chore
-            ci
-            refactor
-            perf
-            test
-            build
-            style
-            revert
-
-  yaml-lint:
-    name: 📝 YAML & Workflows
-    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 1
-
-      - name: 📦 Cache yamllint (pip --user)
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.local
-          # Keyed on the hash-locked requirements file (ASW-327): a version or
-          # transitive-dependency bump busts the cache automatically. No
-          # restore-keys prefix fallback on purpose — a prefix hit would restore
-          # an old ~/.local with yamllint already present, and ensure-yamllint.sh
-          # only installs when `command -v yamllint` fails, so the bumped /
-          # hash-verified version would be silently skipped until the old cache
-          # evicts. Exact-key-or-cold-install keeps the pin honest (CodeRabbit).
-          key: ${{ runner.os }}-python-yamllint-${{ hashFiles('infrastructure/requirements-yamllint.txt') }}
-
-      - name: 📦 Cache actionlint binary
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ./actionlint
-          # Exact-key-or-cold, like the yamllint cache above — no restore-keys
-          # prefix fallback, which could restore an older actionlint under a
-          # bumped version key. ensure-actionlint.sh also version-gates the
-          # binary (re-downloads a stale hit), so this is belt-and-braces.
-          # Bump in lockstep with ACTIONLINT_VERSION in ensure-actionlint.sh.
-          key: ${{ runner.os }}-actionlint-1.7.5
-
-      - name: 📝 Run yamllint
-        # Logic lives in infrastructure/scripts/ensure-yamllint.sh — install
-        # if missing, then run. Tested via bats; see infrastructure/tests/.
-        run: bash infrastructure/scripts/ensure-yamllint.sh
-
-      - name: 🔍 Run actionlint
-        # Logic lives in infrastructure/scripts/ensure-actionlint.sh — download
-        # the pinned binary if missing, then run. Tested via bats.
-        run: bash infrastructure/scripts/ensure-actionlint.sh
-
-  infra:
-    name: 🧪 Infrastructure scripts
-    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
-    runs-on: ubuntu-latest
-    env:
-      HUSKY: 0
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 1
-
-      - name: ⚙️ Load repo config
-        id: repo
-        uses: ./.github/actions/load-repo-config
-
-      - name: 📦 Install pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v4.4.0
-        with:
-          run_install: false
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version-file: ${{ steps.repo.outputs.node_version_file }}
-          cache: pnpm
-
-      - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: 📦 Cache bats binary
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.local
-          key: ${{ runner.os }}-bats-1.13.0
-          restore-keys: |
-            ${{ runner.os }}-bats-
-
-      - name: 🐚 Install shellcheck (apt)
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          sudo apt-get update && sudo apt-get install -y shellcheck
-          shellcheck --version | head -2
-
-      - name: 🐚 Install bats (pinned)
-        # Logic lives in infrastructure/scripts/ensure-bats.sh — bootstraps
-        # bats-core from GitHub releases at the pinned version. Tested via
-        # bats; see infrastructure/tests/ensure-bats.bats.
-        run: bash infrastructure/scripts/ensure-bats.sh
-
-      - name: 🔬 Shellcheck
-        run: pnpm lint:sh
-
-      - name: 🧪 Vitest
-        run: pnpm test
-
-      - name: 🧪 Bats
-        run: pnpm test:sh
+          set -euo pipefail
+          echo "$NEEDS_JSON" \
+            | jq -e 'to_entries | all(.value.result == "success" or .value.result == "skipped")' >/dev/null \
+            || { echo "::error::a required check failed — refusing to go"; exit 1; }
+          echo "All required checks passed — GO."

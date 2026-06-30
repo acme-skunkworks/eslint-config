@@ -1,4 +1,4 @@
-# Release packing ephemerals (release.yml packs into .pack/)
+# Release packing ephemerals (pkg-release.yml / reusable-pkg-release packs into .pack/)
 *.tgz
 .pack/
 

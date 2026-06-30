@@ -74,6 +74,9 @@ importers:
       "@types/node":
         specifier: ^25.6.0
         version: 25.6.0
+      bats:
+        specifier: 1.13.0
+        version: 1.13.0
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -1797,6 +1800,13 @@ packages:
         integrity: sha512-I2NkZOOrj2XuguvWCK6OVh9GavsNjZjK908Rq3mIBK25+GD8vPX5w2WdxVqnQ7xx3SrZJiCiZFu+/Oz50oSYSA==,
       }
     engines: { node: ">=6.0.0" }
+    hasBin: true
+
+  bats@1.13.0:
+    resolution:
+      {
+        integrity: sha512-giSYKGTOcPZyJDbfbTtzAedLcNWdjCLbXYU3/MwPnjyvDXzu6Dgw8d2M+8jHhZXSmsCMSQqCp+YBsJ603UO4vQ==,
+      }
     hasBin: true
 
   brace-expansion@1.1.14:
@@ -6852,6 +6862,8 @@ snapshots:
   balanced-match@4.0.4: {}
 
   baseline-browser-mapping@2.10.24: {}
+
+  bats@1.13.0: {}
 
   brace-expansion@1.1.14:
     dependencies:
