@@ -1,9 +1,9 @@
 ---
 title: Allow Prettier-formatted tsconfig.eslint.json under base
 release_note: >-
-  Prettier-formatted tsconfig.eslint.json files (single-line include arrays)
-  now pass lint without per-file .prettierignore workarounds.
-created_at: "2026-06-30T19:19:46Z"
+  Prettier-formatted tsconfig.eslint.json files (single-line include arrays) now
+  pass lint without per-file .prettierignore workarounds.
+created_at: '2026-06-30T19:19:46Z'
 branch: a-378-stop-requiring-multi-line-tsconfigeslintjson-include-arrays
 author: rob@acmeskunkworks.io
 co_authors: []
@@ -12,6 +12,15 @@ breaking: false
 issues:
   - A-378
   - A-620
+merged_at: '2026-06-30T19:33:04Z'
+commit: a4ee985
+merge_strategy: squash
+pr: 79
+stats:
+  loc_added: 111
+  loc_removed: 1
+  files_changed: 7
+version: 1.1.1
 ---
 
 ## Fixed

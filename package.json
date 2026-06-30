@@ -1,6 +1,6 @@
 {
   "name": "@acme-skunkworks/eslint-config",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Shared ESLint flat-config preset with TypeScript, React, Astro, Sanity, and Storybook support",
   "keywords": [
     "eslint",
