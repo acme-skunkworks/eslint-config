@@ -11,6 +11,7 @@ import { reactRouterExceptions } from "./rules/reactRouterExceptions.js";
 import { sanity } from "./rules/sanity.js";
 import { storybook } from "./rules/storybook.js";
 import { testFiles } from "./rules/testFiles.js";
+import { tsconfigEslintJson } from "./rules/tsconfigEslintJson.js";
 import { typescriptOverrides } from "./rules/typescriptOverrides.js";
 import type { Linter } from "eslint";
 import eslintConfigCanonicalAuto from "eslint-config-canonical/auto";
@@ -30,7 +31,8 @@ const importXAlias: any = {
 /**
  * Base preset — the "you almost always want this" stack:
  * plugin-alias hack, global ignores, the canonical baseline, packageJson
- * lint config, commonjs + esm file overrides, and the big preferences block
+ * and tsconfig.eslint.json lint config, commonjs + esm file overrides, and
+ * the big preferences block
  * (top-level type imports, func-style, prettier, import resolver, etc.).
  */
 export const base: Linter.Config[] = [
@@ -40,6 +42,7 @@ export const base: Linter.Config[] = [
   // Per-rule inventory: https://github.com/gajus/eslint-config-canonical
   ...(eslintConfigCanonicalAuto as Linter.Config[]),
   packageJson,
+  tsconfigEslintJson,
   commonjs,
   esm,
   preferences,
