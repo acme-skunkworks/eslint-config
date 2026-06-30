@@ -2,7 +2,7 @@
 //
 // One detector per config key serves every skill that uses it — `baseBranch`
 // covers changelog + send-it + preflight; `issueKeys` covers changelog +
-// cleanup-repo + linear-sync. A key in a skill's config.example.json with NO
+// cleanup-repo + linear-sync + triage-pr. A key in a skill's config.example.json with NO
 // entry here is reported as `needs-manual-input`; the merge then leaves it for
 // the user (or a Linear MCP fact) to supply.
 //
@@ -90,16 +90,9 @@ function detectBundleRoot(repoRoot) {
  * @param {string} params.repoRoot host repo root the detectors scan
  * @param {{ linearTeamName?: string, linearWorkspaceSlug?: string, issueKeys?: string[] }} [params.linearFacts]
  *   facts the script cannot derive from git/fs (supplied by Claude via the Linear MCP)
- * @param {Set<string>} [params.installedSkills] names of the sibling skill bundles
- *   discovered alongside this one — lets a detector gate on whether a companion
- *   skill (e.g. `changelog`) is actually installed.
  * @returns {{ detect: (key: string) => ({ value: unknown } | null), has: (key: string) => boolean }}
  */
-export function createDetectors({
-  installedSkills = new Set(),
-  linearFacts = {},
-  repoRoot,
-}) {
+export function createDetectors({ linearFacts = {}, repoRoot }) {
   const cache = new Map();
 
   const registry = {
@@ -115,31 +108,38 @@ export function createDetectors({
         ? { value: { manifest: "package.json", root, skillFile: "SKILL.md" } }
         : null;
     },
-    // send-it's changelog step is enabled when the repo has a changelog flow —
-    // either the companion `changelog` skill is installed or a `changelog/`
-    // directory already exists. A repo with neither (e.g. a private repo with no
-    // release pipeline) gets `false` so send-it skips authoring entirely rather
-    // than trying to follow an uninstalled skill.
+    // send-it's changelog step is enabled when the repo actually has a changelog
+    // flow of its own — a `changelog/` directory at the repo root. Keying off the
+    // companion `changelog` skill merely being *vendored* misfires: a repo that
+    // over-installed the skill but keeps no changelog of its own (e.g.
+    // release-orchestrator, which runs *other* repos' `changelog:finalise`) was
+    // wrongly flipped `true` and would then try to author entries with nowhere to
+    // live (A-570). A repo with no `changelog/` dir gets `false` so send-it skips
+    // authoring entirely.
     //
     // Like `changelogDir` / `fallbackPackage`, this always emits a value (never
     // `null`): `false` is a real detected signal, not "couldn't detect", so the
     // merge writes it. Contrast `bundleVersioning`, which returns `null` when
     // disabled so the key is left untouched.
     changelog: () => ({
+      // A directory specifically — a plain file named `changelog` must not enable
+      // the flow. throwIfNoEntry:false returns undefined when absent.
       value:
-        installedSkills.has("changelog") ||
-        // A directory specifically — a plain file named `changelog` must not
-        // enable the flow. throwIfNoEntry:false returns undefined when absent.
-        (statSync(join(repoRoot, "changelog"), {
+        statSync(join(repoRoot, "changelog"), {
           throwIfNoEntry: false,
-        })?.isDirectory() ??
-          false),
+        })?.isDirectory() ?? false,
     }),
     // changelogDir / fallbackPackage are structural conventions with sound
     // generic defaults (mirroring the changelog bundle's own DEFAULTS) — emit
     // them confidently rather than flagging for manual input.
     changelogDir: () => ({ value: "changelog" }),
     fallbackPackage: () => ({ value: "infrastructure" }),
+    // triage-pr follow-up capture is opt-in: emit the bundle's own structural
+    // defaults confidently (never null) so they aren't flagged needs-manual-input.
+    // Empty label/project mean "unset"; a consumer edit reads as drift and is kept.
+    followUpLabel: () => ({ value: "" }),
+    followUpProject: () => ({ value: "" }),
+    followUpState: () => ({ value: "Backlog" }),
     issueKeys: () => {
       const fromFacts = linearFacts.issueKeys;
       if (Array.isArray(fromFacts) && fromFacts.length > 0) {
@@ -166,8 +166,8 @@ export function createDetectors({
       const roots = detectPackageRoots(repoRoot);
       return roots.length > 0 ? { value: roots } : null;
     },
-    // No repo signal; emit triage-pr's opt-in-off default (never null) so it isn't flagged needs-manual-input — a later edit reads as drift and is kept.
-    promoteOnGreen: () => ({ value: false }),
+    // No repo signal; emit triage-pr's default-on promotion default (never null) so it isn't flagged needs-manual-input — a later edit reads as drift and is kept.
+    promoteOnGreen: () => ({ value: true }),
     // Protect the detected default branch, not a hard-coded "main", so a
     // master/develop repo gets a consistent result.
     protectedBranches: () => ({ value: [detect("baseBranch").value] }),
