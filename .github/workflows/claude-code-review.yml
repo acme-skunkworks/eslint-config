@@ -11,6 +11,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  id-token: write
+
 jobs:
   claude-review:
     uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-claude-code-review.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
