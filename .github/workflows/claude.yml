@@ -20,4 +20,5 @@ permissions:
 jobs:
   claude:
     uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-claude.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
-    secrets: inherit
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
