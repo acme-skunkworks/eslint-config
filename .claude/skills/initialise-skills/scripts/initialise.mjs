@@ -15,7 +15,8 @@
 // Exit codes: 0 success; 2 usage/IO error.
 
 import { createDetectors } from "./lib/detectors.mjs";
-import { discoverSkills } from "./lib/discover.mjs";
+import { discoverSkills, isPreflightInstalled } from "./lib/discover.mjs";
+import { reconcilePreflightIgnore } from "./lib/gitignore.mjs";
 import { serialiseConfig } from "./lib/jsonio.mjs";
 import { mergeConfig } from "./lib/merge.mjs";
 import { buildReport, formatHuman } from "./lib/report.mjs";
@@ -145,7 +146,6 @@ function main() {
   const { acceptDrift, facts } = readStdinPayload();
   const skills = discoverSkills(options.skillsDir);
   const { detect } = createDetectors({
-    installedSkills: new Set(skills.map((skill) => skill.name)),
     linearFacts: facts,
     repoRoot: options.repoRoot,
   });
@@ -194,7 +194,32 @@ function main() {
     });
   }
 
-  const report = buildReport(skillReports, options.write);
+  // One mutation outside config.json: ensure preflight's scratch output is
+  // gitignored. Gated on preflight (the file's producer) being installed — its
+  // bundle is skipped by discoverSkills, so check separately (A-569).
+  let gitignore = null;
+  if (isPreflightInstalled(options.skillsDir)) {
+    try {
+      const result = reconcilePreflightIgnore(options.repoRoot, {
+        write: options.write,
+      });
+      gitignore = {
+        path: relative(options.repoRoot, result.path),
+        status: result.status,
+      };
+    } catch (error) {
+      // The top-level main() catch already funnels this to exit(2); name the
+      // .gitignore write specifically so the failure is diagnosable, mirroring
+      // the per-skill config write handler above (A-583). The per-skill writes
+      // are idempotent, so a re-run after fixing the I/O cause is safe.
+      console.error(
+        `initialise-skills: could not reconcile .gitignore: ${error.message}`,
+      );
+      process.exit(2);
+    }
+  }
+
+  const report = buildReport(skillReports, options.write, gitignore);
   if (options.json) {
     console.log(JSON.stringify(report, null, 2));
   } else {

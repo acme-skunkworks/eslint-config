@@ -16,7 +16,7 @@ compatibility: >-
   `preflight-changelog-ci.mjs` step assumes the consumer repo uses pnpm with a
   committed lockfile; skip it if yours does not.
 metadata:
-  version: 0.6.1
+  version: 0.8.0
   author: Rob Easthope
 allowed-tools: Write, Read, Edit, Glob, Grep, Bash(git:*), Bash(node:*), Bash(pnpm:*)
 ---
@@ -107,8 +107,8 @@ for the full rules. In short:
   default) and omit the field entirely.
 - **`created_at` is sacred** — set once on create (UTC time of first run); on
   update, preserve it verbatim.
-- **Never authored here:** `stats` (`files_changed`, `loc_added`, `loc_removed`)
-  and the post-merge fields `merged_at` / `commit` / `merge_strategy`. A release
+- **Never authored here:** `stats` (`files_changed`, `loc_added`, `loc_removed`,
+  `commits`) and the post-merge fields `merged_at` / `commit` / `merge_strategy`. A release
   step finalises them from canonical GitHub PR data after merge. Emit them as
   blank placeholders on create; leave existing values untouched on update.
 - `pr` is back-filled by the ship flow once the PR exists (not here when
@@ -158,7 +158,7 @@ post-merge fields blank):
 
 ```bash
 node skills/changelog/scripts/set-affected-packages.mjs   # writes affected_packages from the branch diff
-node skills/changelog/scripts/add-links.mjs               # rewrites bare issue IDs in the body to Linear URLs
+node skills/changelog/scripts/add-links.mjs               # rewrites bare issue IDs in the current branch's entry to Linear URLs
 ```
 
 Adjust the path prefix if you installed the skill to a different location.
@@ -173,12 +173,14 @@ node skills/changelog/scripts/set-affected-packages.mjs --check   # current bran
 node skills/changelog/scripts/add-links.mjs --check               # ALL entries in the changelog dir
 ```
 
-Mind the scope difference: `set-affected-packages.mjs` is branch-scoped (it
-derives from the current branch diff), whereas `add-links.mjs` enriches **every**
-entry in the changelog directory in all modes — so its `--check` validates a
-full-repo enrichment pass and can exit `1` on a historical entry. Use it to
-confirm the directory is fully enriched, not as a per-PR gate for one branch's
-entry.
+Both enrichers are **branch-scoped by default** (A-603): `add-links.mjs` with no
+arguments rewrites only the entry/entries whose `branch:` frontmatter matches the
+current git branch, so authoring a new entry never churns unrelated, already-merged
+ones. Two modes still scan the **whole** directory: `--all` (a deliberate
+full-directory rewrite) and `--check`/`--dry-run` (the completeness gate, which can
+exit `1` on a historical entry). Use `--check` to confirm the directory is fully
+enriched; use the default for the per-PR pass on one branch's entry. (When git is
+unavailable the default falls back to the full sweep.)
 
 ### Step 6 — Validate against the contract
 
@@ -224,11 +226,12 @@ ship in the bundle too, and an adopter wiring up the orchestrator/CI gate needs
 them. They are referenced from the consumer's `package.json` scripts and
 workflows rather than invoked during authoring:
 
-- `scripts/finalise-changelog.mjs` — release-time enrichment + version-stamping, **run by the release orchestrator** right after `release-please release-pr` (the consumer exposes it as the `changelog:finalise` script). For each un-finalised entry it resolves the merged PR via `gh`/`git`, fills the post-merge fields (`merged_at` / `commit` / `pr` / `merge_strategy` / `stats`), stamps `version` with the just-bumped `package.json` version, and links bare Linear IDs. It composes `lib/enrich.mjs` (the PR-metadata fill) and `lib/stamp.mjs` (the version stamp).
+- `scripts/finalise-changelog.mjs` — release-time enrichment + version-stamping, **run by the release orchestrator** right after `release-please release-pr` (the consumer exposes it as the `changelog:finalise` script). For each un-finalised entry it resolves the merged PR via `gh`/`git`, fills the post-merge fields (`merged_at` / `commit` / `pr` / `merge_strategy` / `stats`, the last including the merge-excluded `commits` count from the PR commits API), stamps `version` with the just-bumped `package.json` version, and links bare Linear IDs. It composes `lib/enrich.mjs` (the PR-metadata fill), `lib/commit-count.mjs` (the merge-excluded commit count) and `lib/stamp.mjs` (the version stamp).
 - `scripts/check-changelog-completeness.mjs` — the **CI completeness gate**, run by the consumer's validation workflow: a release-triggering (`feat`/`fix`/breaking) PR title must carry a dated `changelog/` entry, or the build fails.
+- `scripts/backfill-commits.mjs` — a one-off backfill of `stats.commits` across the existing `changelog/` backlog (for adopting the count after the fact). Resolves each entry's merged PR via `gh`, splices in only the `commits` line (no re-serialise), and is idempotent; `--dry-run` previews. Not part of authoring or the release flow.
 
 They share helpers under `scripts/lib/` (`changelog.mjs`, `derive-packages.mjs`,
-`frontmatter.mjs`, `config.mjs`, `enrich.mjs`, `stamp.mjs`). So while this skill
+`frontmatter.mjs`, `config.mjs`, `enrich.mjs`, `commit-count.mjs`, `stamp.mjs`). So while this skill
 itself stops at authoring + validation and leaves the post-merge fields blank,
 the **finalisation and completeness scripts that fill them are part of this
 bundle** — the consumer's `package.json` / CI / release orchestrator run them, not
