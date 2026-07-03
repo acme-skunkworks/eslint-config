@@ -42,7 +42,7 @@ jobs:
 
   lint:
     needs: config
-    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-lint.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-lint.yml@9febdb14373f383e3ae4f5a6e3f6bb75a59d0c3d # v1.0.2
     with:
       node-version-file: ${{ needs.config.outputs.node_version_file }}
       eslint-args: index.ts rules infrastructure/scripts
@@ -53,7 +53,7 @@ jobs:
 
   build-test:
     needs: config
-    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-build-test.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-build-test.yml@9febdb14373f383e3ae4f5a6e3f6bb75a59d0c3d # v1.0.2
     with:
       node-version-file: ${{ needs.config.outputs.node_version_file }}
       typecheck: false
