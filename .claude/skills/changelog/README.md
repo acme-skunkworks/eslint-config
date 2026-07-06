@@ -18,14 +18,16 @@ npx skills add https://github.com/acme-skunkworks/agent-skills --skill changelog
 
 ## Configure
 
-The shipped [`config.json`](config.json) carries **ACME Skunkworks values**.
+This skill ships only [`config.example.json`](config.example.json), a neutral
+template — the per-skill `config.json` is generated on install, not vendored.
 `issueKeys` and `linearWorkspaceSlug` are **required and have no default** — a
 missing `config.json`, or either key absent, makes the scripts **fail loudly**
-rather than silently inherit ACME's identity (which would emit wrong issue-ID
-detection and Linear links in a foreign repo). Copy
-[`config.example.json`](config.example.json) over `config.json` (or edit
-`config.json` directly) and set them for your organisation. The remaining keys
-are structural and keep generic, overridable defaults.
+rather than silently inherit another org's identity (which would emit wrong
+issue-ID detection and Linear links in a foreign repo). Run the
+`initialise-skills` skill to generate `config.json`, or copy
+[`config.example.json`](config.example.json) to `config.json` and set them for
+your organisation. The remaining keys are structural and keep generic, overridable
+defaults.
 
 | Key | Meaning | Default |
 | --- | --- | --- |
@@ -65,8 +67,9 @@ deliberately chosen so the bundle is drop-in with no tooling. They span the whol
 changelog lifecycle: the authoring scripts the skill runs (`set-affected-packages`,
 `add-links`, `preflight-changelog-ci`, `validate-changelog`) and the
 finalisation/CI-gate scripts the consumer wires into its `package.json` / CI /
-release orchestrator (`finalise-changelog`, `check-changelog-completeness`) — see
-the SKILL.md "Implementation" section for which actor runs each. Every script takes
+release orchestrator (`finalise-changelog` for npm targets, `enrich-changelog` for
+deploy targets, `check-changelog-completeness`) — see the SKILL.md
+"Implementation" section for which actor runs each. Every script takes
 `--help` (usage, exit 0) and `--self-test` (an offline smoke test of its pure
 logic). Their **unit tests are maintained in the
 [`agent-skills`](https://github.com/acme-skunkworks/agent-skills) repo**, not
