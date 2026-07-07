@@ -19,9 +19,10 @@ permissions:
   contents: read
 
 # Wave 2 reference consumer (A-588/A-592): lint + build-test run through the
-# estate's shared reusable workflows, SHA-pinned to v1.0.0 so Dependabot
-# bumps them together. The changelog-completeness gate and the `GO/NO GO`
-# aggregator stay local (A-418). PR-title validation is a separate workflow
+# estate's shared reusable workflows, floating on the `@v1` major tag so
+# non-breaking releases arrive without a per-release Dependabot SHA bump (A-662
+# / A-672). The changelog-completeness gate and the `GO/NO GO` aggregator stay
+# local (A-418). PR-title validation is a separate workflow
 # (validate-pr-title.yml, A-430) and is required directly by the estate ruleset.
 jobs:
   config:
@@ -42,7 +43,7 @@ jobs:
 
   lint:
     needs: config
-    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-lint.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-lint.yml@v1
     with:
       node-version-file: ${{ needs.config.outputs.node_version_file }}
       eslint-args: index.ts rules infrastructure/scripts
@@ -53,7 +54,7 @@ jobs:
 
   build-test:
     needs: config
-    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-build-test.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-build-test.yml@v1
     with:
       node-version-file: ${{ needs.config.outputs.node_version_file }}
       typecheck: false

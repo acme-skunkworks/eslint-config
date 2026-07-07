@@ -36,7 +36,7 @@ jobs:
 
   release:
     needs: config
-    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-pkg-release.yml@6cbcab65ca27950387b145888a68dd8e5e0d3ebe # v1.0.0
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-pkg-release.yml@v1
     with:
       npm-scope: ${{ needs.config.outputs.npm_scope }}
     permissions:
