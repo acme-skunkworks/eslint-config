@@ -2,18 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Claude Code reads only `CLAUDE.md`, so the `@AGENTS.md` line below imports the canonical shared
+block (which Cursor reads from `AGENTS.md` natively). Estate-wide guidance lives there;
+repo-specific guidance follows below.
+
+@AGENTS.md
+
 ## Repo
 
 Standalone home for `@acme-skunkworks/eslint-config` (extracted from `RobEasthope/protomolecule` — see `MIGRATION_FROM_PROTOMOLECULE.md`). Single ESLint v9 flat-config package, written in TypeScript, compiled to `dist/`, published from this repo via release-please (Conventional Commits — A-371).
-
-## British English
-
-Write all prose in British English — code comments, documentation, commit messages, PR titles/bodies, and any user-facing strings.
-
-- **Spelling:** use British forms — _colour_, _behaviour_, _organisation_, _centre_, _catalogue_, _recognise_, _analyse_.
-- **Grammar/punctuation:** follow British conventions where they differ — single quotes for quoting where appropriate, full stops outside the closing quotation mark when the quoted phrase is partial, _whilst_/_amongst_ acceptable.
-- **Scope vs. identifiers:** this applies to prose only. Do **not** apply it to identifiers or APIs that mirror upstream names (e.g. `color` props in CSS, third-party API field names) — those stay spelled as the upstream defines them.
-- **Exception:** don't rewrite quoted upstream text, dependency names, or any API surface that already uses US spelling.
 
 ## GitHub Actions repo config (A-176)
 
