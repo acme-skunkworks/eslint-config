@@ -10,17 +10,15 @@ infrastructure/
     ensure-yamllint.sh              # pre-commit yamllint (hash-pinned pip install)
     ensure-actionlint.sh            # pre-commit actionlint (SHA-pinned + sha256-verified install)
     ensure-bats.sh                  # reusable-build-test bats lane (sha256-verified tarball)
-    validate-changelog.ts           # reusable-lint changelog lane (schema check)
-    check-changelog-completeness.ts # ci.yml changelog-completeness gate (A-371)
-    finalise-changelog.ts           # orchestrator step after release-please release-pr (= pnpm changelog:finalise)
-    enrich-changelog.ts             # pure lib used by finalise (fills entry stats)
-    add-links-changelog.ts          # pure lib used by finalise (rewrites Linear IDs to links)
-    stamp-changelog-version.ts      # pure lib used by finalise (stamps the bumped version)
   tests/
     *.test.ts                       # vitest, run via `pnpm test`
     *.bats                          # bats-core, run via `pnpm test:sh`
     fixtures/                       # static inputs shared by tests
 ```
+
+Changelog validate / enrich / finalise live in `@acme-skunkworks/changelog-core`
+(`pnpm exec changelog-core …`); post-merge write-back is
+`reusable-changelog-enrich.yml` (A-796 / A-821).
 
 ## Per-script language rule
 

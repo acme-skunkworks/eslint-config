@@ -46,7 +46,7 @@ jobs:
     uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-lint.yml@v1
     with:
       node-version-file: ${{ needs.config.outputs.node_version_file }}
-      eslint-args: index.ts rules infrastructure/scripts
+      eslint-args: index.ts rules
       markdown-globs: |
         **/*.{md,mdx}
         !**/node_modules/**
@@ -92,7 +92,7 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BASE_REF: ${{ github.base_ref }}
-        run: pnpm tsx infrastructure/scripts/check-changelog-completeness.ts
+        run: pnpm exec changelog-core check-completeness
 
   go-no-go:
     name: GO/NO GO

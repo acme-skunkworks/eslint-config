@@ -25,11 +25,7 @@
     "tsBuildInfoFile": ".tsbuildinfo",
     "useDefineForClassFields": true
   },
-  "include": [
-    "index.ts",
-    "rules/**/*.ts",
-    "infrastructure/scripts/**/*.ts"
-  ],
+  "include": ["index.ts", "rules/**/*.ts"],
   "exclude": [
     "dist",
     "node_modules",
