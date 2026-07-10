@@ -148,21 +148,19 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 Today's scripts:
 
-| File                                      | Replaces                                                               | Tests                                                                                                                 |
-| ----------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `scripts/ensure-yamllint.sh`              | `ci.yml` yamllint step                                                 | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
-| `scripts/ensure-actionlint.sh`            | `ci.yml` actionlint step                                               | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
-| `scripts/ensure-bats.sh`                  | `ci.yml` bats install step                                             | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
-| `scripts/validate-changelog.ts`           | `ci.yml` build-and-lint `validate:changelog`                           | `tests/validate-changelog.test.ts` (vitest — schema accept/reject cases)                                              |
-| `scripts/check-changelog-completeness.ts` | `ci.yml` build-and-lint changelog-completeness gate (A-371)            | `tests/check-changelog-completeness.test.ts` (vitest — release-triggering detection, entry presence)                  |
-| `scripts/finalise-changelog.ts`           | orchestrator step, run after `release-please release-pr` (A-371/A-376) | `tests/finalise-changelog.test.ts` (vitest — finalise + gh/git resolver via fake runner)                              |
-| `scripts/enrich-changelog.ts`             | (pure lib used by finalise)                                            | `tests/enrich-changelog.test.ts` (vitest — fill-once, stats overwrite, idempotency)                                   |
-| `scripts/add-links-changelog.ts`          | (pure lib used by finalise)                                            | `tests/add-links-changelog.test.ts` (vitest — masking code/links, ASW/AKW IDs)                                        |
-| `scripts/stamp-changelog-version.ts`      | (pure lib used by finalise)                                            | `tests/stamp-changelog-version.test.ts` (vitest — stamp-once, absent-field)                                           |
+| File                           | Replaces                   | Tests                                                                                                                 |
+| ------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `scripts/ensure-yamllint.sh`   | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
+| `scripts/ensure-actionlint.sh` | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
+| `scripts/ensure-bats.sh`       | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
 
-CI: the `infra` job in `ci.yml` runs `pnpm lint:sh`, `pnpm test`, `pnpm test:sh`, and `pnpm validate:changelog` against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
+Changelog validate / completeness / enrich / finalise are provided by
+`@acme-skunkworks/changelog-core` (`pnpm validate:changelog`,
+`pnpm exec changelog-core check-completeness`). Post-merge write-back is the
+`changelog-enrich` job in `pkg-release.yml` calling
+`reusable-changelog-enrich.yml` (A-796 / A-821).
 
-> The changelog scripts use `gray-matter` (a devDependency) and the validator is a long flat list of schema checks, so `eslint.config.ts` scopes a `devDependencies: true` + `complexity: off` override to `infrastructure/**`.
+CI: the shared `reusable-build-test.yml` caller runs vitest, shellcheck, and bats against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
 
 When adding workflow-extracted tooling, write the test first, then wire from YAML as a one-liner: `run: pnpm tsx infrastructure/scripts/<name>.ts` or `run: bash infrastructure/scripts/<name>.sh`. (The bespoke `/send-it` slash command and its `infrastructure/send-it/` helpers were superseded by the shared `send-it` agent skill — see [Agent skills](#agent-skills); its bump logic now lives in the bundle's `derive-bump.mjs`.)
 
@@ -194,14 +192,14 @@ The package is a flat-config preset composer. Source is TypeScript; consumers im
 
 The `changelog/` directory is the **only** changelog in the repo — there is no root `CHANGELOG.md` (release-please runs with `skip-changelog`, A-371). It keeps **one dated Markdown file per shippable change** — a browsable, per-change, machine-readable record (the pattern is borrowed from the `octavo` repo, adapted for a single semver'd npm package: a `version` field is added, `affected_packages` dropped). `pkg-release.yml` (via `reusable-pkg-release.yml`) sources its GitHub-release notes from these entries. Full schema and lifecycle in **`changelog/README.md`**.
 
-Two-stage lifecycle — finalisation rides inside the release-please release PR, which the private release-orchestrator creates (A-320 / A-376).
+Two-stage lifecycle — post-merge enrichment runs in-repo via
+`reusable-changelog-enrich.yml` on every push to `main` (A-796 / A-821); the
+orchestrator's inline finalise is retired later (A-801).
 
-1. **PR-time** — `/send-it` Step 5b writes `changelog/<YYYYMMDD-HHMMSS>-<slug>.md` with the PR-time fields (and empty enrichment placeholders), **gated on shippability** (only for shippable changes per Step 5.3 — the same changes that get a release-triggering `feat`/`fix`/breaking PR title), so every entry maps to a version bump. CI's changelog-completeness gate re-enforces this coupling. The entry merges to `main` with its feature PR and sits with placeholders until release.
-2. **Release (in the release PR)** — the **orchestrator** runs `release-please release-pr` (which bumps `package.json` + `.release-please-manifest.json`) then `finalise-changelog.ts` (= `pnpm changelog:finalise`). For every entry without a `version`, finalise resolves its merged PR from the `branch` field via `gh` (filling `merged_at`/`commit`/`pr`/`merge_strategy`/`stats`), stamps the just-bumped `version`, and rewrites Linear IDs to links. The orchestrator commits those changelog edits **into the release PR** (pushed with its App token) — so they merge and publish through the normal flow. Idempotent and re-run-safe (it always starts from the placeholder entries on `main`).
+1. **PR-time** — `/send-it` writes `changelog/<YYYYMMDD-HHMMSS>-<slug>.md` with the PR-time fields (and empty enrichment placeholders), **gated on shippability** (only for shippable changes — the same changes that get a release-triggering `feat`/`fix`/breaking PR title), so every entry maps to a version bump. CI's changelog-completeness gate re-enforces this coupling. The entry merges to `main` with its feature PR and sits with placeholders until post-merge enrich / release finalise.
+2. **Post-merge / release** — `pkg-release.yml`'s `changelog-enrich` job (`mode: finalise`) resolves the just-merged PR, fills `merged_at`/`commit`/`pr`/`stats` via `changelog-core enrich`, and stamps `version` via `changelog-core finalise` only when `package.json`'s version has no matching git tag (release-please cut). Write-back pushes only `changelog/**` as `road-runner-bot[bot]` (ADR 0004).
 
-`validate:changelog` enforces the schema (CI: the shared `reusable-lint.yml` caller). Required frontmatter is relaxed to `title`/`created_at`/`category`/`breaking` so backfilled historical entries (no branch/author/stats) and in-flight entries (no version/stats yet) both pass.
-
-`finalise-changelog.ts` is the only CLI; `enrich-changelog.ts`, `add-links-changelog.ts`, and `stamp-changelog-version.ts` are pure library modules it composes.
+`validate:changelog` (`pnpm exec changelog-core validate`) enforces the schema (CI: the shared `reusable-lint.yml` caller). Required frontmatter is relaxed to `title`/`created_at`/`category`/`breaking` so backfilled historical entries and in-flight entries both pass.
 
 ## Release workflow
 
@@ -212,8 +210,8 @@ There are two release modes — know which one you're in.
 Once the package exists on npm AND its Trusted Publisher is configured against this repo's `pkg-release.yml` (and `npm-release` environment), every release flows through CI:
 
 1. Make changes on a feature branch; `/send-it` bundles, writes the dated `changelog/<slug>.md` entry (for shippable changes), sets a **Conventional Commits PR title** (the squash subject release-please reads — `feat`/`fix`/`feat!` for shippable, a non-release type otherwise), pushes, opens a PR. CI (`ci.yml` + `validate-pr-title.yml`) runs shared lint/build-test callers, the conventional-PR-title lint, the changelog-completeness gate, and the `GO/NO GO` aggregator.
-2. After merge, the private **release-orchestrator** (road-runner-bot, runs a 15-min cron) mints a short-lived repo-scoped App token, runs `release-please release-pr` (which infers the bump from the merged PR titles and writes `package.json` + `.release-please-manifest.json`) then `finalise-changelog.ts`, pushes the `release-please--branches--main` branch, and opens the "`chore(main): release <version>`" release PR. On a later tick it squash-merges that PR once `GO/NO GO` is green (dual-accepts legacy `🔬 Build & Lint` during rollout, A-419).
-3. The orchestrator's App-token merge pushes to `main`, re-firing `pkg-release.yml`. The thin caller invokes `acme-skunkworks/shared-workflows/.github/workflows/reusable-pkg-release.yml@<sha>` (A-588/A-456): build-once → npm OIDC Trusted Publishing → GitHub Packages mirror → tag + GitHub release (notes from the dated `changelog/` entry).
+2. After merge, the private **release-orchestrator** (road-runner-bot, runs a 15-min cron) mints a short-lived repo-scoped App token, runs `release-please release-pr` (which infers the bump from the merged PR titles and writes `package.json` + `.release-please-manifest.json`), pushes the `release-please--branches--main` branch, and opens the "`chore(main): release <version>`" release PR. On a later tick it squash-merges that PR once `GO/NO GO` is green.
+3. The orchestrator's App-token merge pushes to `main`, re-firing `pkg-release.yml`: the `release` job publishes via shared-workflows; the sibling `changelog-enrich` job (`mode: finalise`) fills post-merge changelog metadata and stamps `version` on the release cut (A-796).
 
 **`pkg-release.yml` is publish-only (A-320).** It does **not** create the release PR — versioning lives in the orchestrator where the App key stays private (A-312). Publish logic is centralised in shared-workflows (A-384); this repo no longer ships local `publish-*.sh` wrappers.
 
