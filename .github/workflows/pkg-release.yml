@@ -52,10 +52,10 @@ jobs:
       attestations: write
 
   # Post-merge changelog enrich / finalise via changelog-core (A-796 / A-821).
-  # Pin at the A-821 merge SHA until shared-workflows @v1 moves past PR #65.
+  # Pin at A-821 merge SHA (shared-workflows#65) until @v1 moves.
   # secrets: inherit passes ROADRUNNER_PRIVATE_KEY for the App-token write-back.
   changelog-enrich:
-    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-changelog-enrich.yml@f5330de6490264922c0a23669eaede102cf81fa5
+    uses: acme-skunkworks/shared-workflows/.github/workflows/reusable-changelog-enrich.yml@a87a5ba1eaa9dea0b9fb87afebe47f1c92ea7455
     with:
       mode: finalise
     permissions:
