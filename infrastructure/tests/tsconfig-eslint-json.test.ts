@@ -4,18 +4,26 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { base } from "../../dist/index.js";
 
-const FIXTURE = "infrastructure/tests/fixtures/tsconfig.eslint.json";
+const ESLINT_FIXTURE = "infrastructure/tests/fixtures/tsconfig.eslint.json";
+const TOOLS_FIXTURE = "infrastructure/tests/fixtures/tsconfig.tools.json";
 const DUPE_KEYS_FIXTURE =
   "infrastructure/tests/fixtures/dupe-keys/tsconfig.eslint.json";
 
-describe("tsconfig.eslint.json under base", () => {
+describe("tsconfig.*.json under base", () => {
   beforeAll(() => {
     execSync("pnpm run build", { stdio: "inherit" });
   });
 
   it("passes lint when Prettier-formatted (single-line include)", async () => {
     const eslint = new ESLint({ baseConfig: base, overrideConfigFile: true });
-    const [result] = await eslint.lintFiles([FIXTURE]);
+    const [result] = await eslint.lintFiles([ESLINT_FIXTURE]);
+
+    expect(result?.errorCount).toBe(0);
+  });
+
+  it("passes lint for Prettier-formatted tsconfig.tools.json (short exclude)", async () => {
+    const eslint = new ESLint({ baseConfig: base, overrideConfigFile: true });
+    const [result] = await eslint.lintFiles([TOOLS_FIXTURE]);
 
     expect(result?.errorCount).toBe(0);
   });

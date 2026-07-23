@@ -1,25 +1,28 @@
 import type { Linter } from "eslint";
 
 /**
- * Part of `base` — applied to every `tsconfig.eslint.json`.
+ * Part of `base` — applied to every named `tsconfig.*.json` variant
+ * (`tsconfig.eslint.json`, `tsconfig.tools.json`, `tsconfig.build.json`, …).
+ * Plain `tsconfig.json` is globally ignored, so it is out of scope here.
  *
  * Disables jsonc formatting rules that conflict with Prettier output. Canonical's
  * `json` config requires multi-line arrays and strict object layout, but Prettier
- * collapses short arrays (e.g. `include`) onto one line — consumers were forced
- * to `.prettierignore` each file. Prettier owns JSON formatting for this path;
- * semantic jsonc/no-* rules from canonical still apply.
+ * collapses short arrays (e.g. `exclude`, `include`) onto one line — consumers
+ * were forced to `.prettierignore` each file. Prettier owns JSON formatting for
+ * these paths; semantic jsonc/no-* rules from canonical still apply.
  *
- * See: https://linear.app/acme-skunkworks/issue/A-378
+ * See: https://linear.app/acme-skunkworks/issue/A-709
+ * Origin (eslint-only): https://linear.app/acme-skunkworks/issue/A-378
  */
 export const tsconfigEslintJson = {
-  files: ["**/tsconfig.eslint.json"],
+  files: ["**/tsconfig.*.json"],
   rules: {
     // jsonc/array-bracket-newline — requires line breaks after '[' and before ']'.
-    // Off: Prettier keeps short include arrays on one line.
+    // Off: Prettier keeps short include/exclude arrays on one line.
     // https://ota-meshi.github.io/eslint-plugin-jsonc/rules/array-bracket-newline.html
     "jsonc/array-bracket-newline": "off",
     // jsonc/array-element-newline — requires line breaks between array elements.
-    // Off: Prettier keeps short include arrays on one line.
+    // Off: Prettier keeps short include/exclude arrays on one line.
     // https://ota-meshi.github.io/eslint-plugin-jsonc/rules/array-element-newline.html
     "jsonc/array-element-newline": "off",
     // jsonc/object-curly-spacing — enforces spacing inside object braces.
