@@ -16,14 +16,15 @@ stats:
   files_changed: 21
   loc_added: 87
   loc_removed: 1676
-  commits:
+  commits: 6
+version: 1.1.2
 ---
 
 ## Changed
 
 - **Validate / completeness** now run via `pnpm exec changelog-core` — vendored `infrastructure/scripts/*changelog*.ts` and tests removed.
-- **`pkg-release.yml`** gains a `changelog-enrich` sibling job (`mode: finalise`, `secrets: inherit`) calling `reusable-changelog-enrich.yml` (A-821 pin) so post-merge fields and release `version` stamps land in-repo as `road-runner-bot[bot]`.
+- **`pkg-release.yml`** gains a `changelog-enrich` sibling job (`mode: finalise`, `secrets: inherit`) calling `reusable-changelog-enrich.yml` ([A-821](https://linear.app/acme-skunkworks/issue/A-821) pin) so post-merge fields and release `version` stamps land in-repo as `road-runner-bot[bot]`.
 
 ## Fixed
 
-N/A — canary adoption of the shared enricher path (parity vs the orchestrator inline finalise is the A-796 gate).
+N/A — canary adoption of the shared enricher path (parity vs the orchestrator inline finalise is the [A-796](https://linear.app/acme-skunkworks/issue/A-796) gate).

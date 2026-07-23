@@ -1,13 +1,22 @@
 ---
 title: Bump Claude-pair caller pins to v1.0.2
-release_note: ""
-created_at: "2026-07-01T13:01:58Z"
+release_note: ''
+created_at: '2026-07-01T13:01:58Z'
 branch: a-626-eslint-config-bump-claude-pair-caller-pins-v100-v102-pilot
 category: chore
 breaking: false
 issues:
   - A-626
   - A-623
+merged_at: '2026-07-01T13:07:49Z'
+commit: 0e6fe2f
+pr: 81
+stats:
+  loc_added: 23
+  loc_removed: 2
+  files_changed: 3
+  commits: 2
+version: 1.1.2
 ---
 
 ## Changed
