@@ -1,23 +1,22 @@
 ---
-title: "Let Prettier win on all tsconfig.*.json variants"
-release_note: >-
-  Prettier-formatted named tsconfig variants (e.g. tsconfig.tools.json with a
-  short exclude array) now pass lint under base without .prettierignore workarounds.
-created_at: "2026-07-17T16:52:39Z"
-merged_at:
-branch: "cursor/a-709-tsconfig-variants-jsonc-prettier-5c17"
-pr:
-commit:
+title: Let Prettier win on all tsconfig.*.json variants
+release_note: Prettier-formatted named tsconfig variants (e.g. tsconfig.tools.json with a short exclude array) now pass lint under base without .prettierignore workarounds.
+created_at: '2026-07-17T16:52:39Z'
+merged_at: '2026-07-23T11:11:49Z'
+branch: cursor/a-709-tsconfig-variants-jsonc-prettier-5c17
+pr: 95
+commit: 60b732b
 merge_strategy:
-author: "cursoragent@cursor.com"
+author: cursoragent@cursor.com
 co_authors: []
 category: fix
 breaking: false
-issues: ["A-709"]
+issues:
+  - A-709
 stats:
-  files_changed:
-  loc_added:
-  loc_removed:
+  files_changed: 4
+  loc_added: 76
+  loc_removed: 11
   commits:
 ---
 
