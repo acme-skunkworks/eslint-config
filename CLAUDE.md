@@ -209,8 +209,8 @@ There are two release modes — know which one you're in.
 
 Once the package exists on npm AND its Trusted Publisher is configured against this repo's `pkg-release.yml` (and `npm-release` environment), every release flows through CI:
 
-1. Make changes on a feature branch; `/send-it` bundles, writes the dated `changelog/<slug>.md` entry (for shippable changes), sets a **Conventional Commits PR title** (the squash subject release-please reads — `feat`/`fix`/`feat!` for shippable, a non-release type otherwise), pushes, opens a PR. CI (`ci.yml` + `validate-pr-title.yml`) runs shared lint/build-test callers, the conventional-PR-title lint, the changelog-completeness gate, and the `GO/NO GO` aggregator.
-2. After merge, the private **release-orchestrator** (road-runner-bot, runs a 15-min cron) mints a short-lived repo-scoped App token, runs `release-please release-pr` (which infers the bump from the merged PR titles and writes `package.json` + `.release-please-manifest.json`), pushes the `release-please--branches--main` branch, and opens the "`chore(main): release <version>`" release PR. On a later tick it squash-merges that PR once `GO/NO GO` is green.
+1. Make changes on a feature branch; `/send-it` bundles, writes the dated `changelog/<slug>.md` entry (for shippable changes), sets a **Conventional Commits PR title** (`feat`/`fix`/`feat!` for shippable, a non-release type otherwise — still required by CI; no longer the sole post-merge bump signal under merge commits), pushes, opens a PR. Feature PRs land as **merge commits**. CI (`ci.yml` + `validate-pr-title.yml`) runs shared lint/build-test callers, the conventional-PR-title lint, the changelog-completeness gate, and the `GO/NO GO` aggregator.
+2. After merge, the private **release-orchestrator** (road-runner-bot, runs a 15-min cron) mints a short-lived repo-scoped App token, runs `release-please release-pr` (which ranks Conventional Commits on `main` — A-824 — and writes `package.json` + `.release-please-manifest.json`), pushes the `release-please--branches--main` branch, and opens the "`chore(main): release <version>`" release PR. On a later tick it **squash-merges** that release PR once `GO/NO GO` is green (fan-out PRs also stay squash).
 3. The orchestrator's App-token merge pushes to `main`, re-firing `pkg-release.yml`: the `release` job publishes via shared-workflows; the sibling `changelog-enrich` job (`mode: finalise`) fills post-merge changelog metadata and stamps `version` on the release cut (A-796).
 
 **`pkg-release.yml` is publish-only (A-320).** It does **not** create the release PR — versioning lives in the orchestrator where the App key stays private (A-312). Publish logic is centralised in shared-workflows (A-384); this repo no longer ships local `publish-*.sh` wrappers.
@@ -225,7 +225,7 @@ Once the package exists on npm AND its Trusted Publisher is configured against t
 
 Don't reintroduce `NPM_TOKEN` **as a CI secret** unless OIDC is verified broken. The local `.env`-based `NPM_TOKEN` is for laptop-driven publishes only, never CI.
 
-**Choosing the bump.** The bump is inferred by release-please from the **Conventional Commits PR title** (the squash subject). The conventional-PR-title lint (`validate-pr-title.yml`) + the changelog-completeness gate in `ci.yml` keep the title honest.
+**Choosing the bump.** Feature PRs land as merge commits; release-please ranks Conventional Commits on `main` (A-824). Conventional PR titles stay required (CI `validate-pr-title.yml`) but are no longer the sole post-merge bump signal for feature work. Commitlint / `validate-commits` remain the per-commit gate. The orchestrator still squash-merges the release PR; fan-out stays squash. The changelog-completeness gate in `ci.yml` keeps shippable titles honest.
 
 ### Manual publish (break-glass — CI-down only, after the package exists)
 
