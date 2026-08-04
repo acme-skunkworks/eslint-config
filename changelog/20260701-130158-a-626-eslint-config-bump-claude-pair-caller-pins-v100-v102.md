@@ -25,6 +25,6 @@ version: 1.1.2
   from `v1.0.0` (`6cbcab65…`) to `v1.0.2` (`9febdb14…`). `v1.0.0` shipped a
   top-level `concurrency:` in `reusable-claude-code-review.yml` that
   deadlock-cancelled every caller's run at startup; shared-workflows PR #21
-  removed it ([A-621](https://linear.app/acme-skunkworks/issue/A-621)).
+  removed it ([A-621](https://linear.app/rheged-studio/issue/A-621)).
 - Pilot for the estate-wide rollout of the canonical Claude-pair caller pattern
-  ([A-623](https://linear.app/acme-skunkworks/issue/A-623)).
+  ([A-623](https://linear.app/rheged-studio/issue/A-623)).

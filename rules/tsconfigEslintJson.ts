@@ -11,8 +11,8 @@ import type { Linter } from "eslint";
  * were forced to `.prettierignore` each file. Prettier owns JSON formatting for
  * these paths; semantic jsonc/no-* rules from canonical still apply.
  *
- * See: https://linear.app/acme-skunkworks/issue/A-709
- * Origin (eslint-only): https://linear.app/acme-skunkworks/issue/A-378
+ * See: https://linear.app/rheged-studio/issue/A-709
+ * Origin (eslint-only): https://linear.app/rheged-studio/issue/A-378
  */
 export const tsconfigEslintJson = {
   files: ["**/tsconfig.*.json"],

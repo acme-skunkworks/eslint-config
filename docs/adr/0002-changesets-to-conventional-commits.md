@@ -1,11 +1,11 @@
 # Switch versioning from Changesets to Conventional Commits (release-please)
 
 **Status:** accepted (2026-06-22); **Amended** 2026-08-03
-**Linear:** [A-371](https://linear.app/acme-skunkworks/issue/A-371)
+**Linear:** [A-371](https://linear.app/rheged-studio/issue/A-371)
 
-> **Amended (A-1176).** The “squash merge stays” recommendation for **feature** PRs below is **superseded** by the estate dual merge policy in [shared-agents-md ADR-0003](https://github.com/acme-skunkworks/shared-agents-md/blob/main/docs/adr/0003-dual-merge-policy.md) ([A-1176](https://linear.app/acme-skunkworks/issue/A-1176)): feature/ship PRs land as **merge commits**; release-please ranks Conventional Commits on `main` (A-824); Conventional PR titles stay CI-required but are no longer the sole post-merge bump signal for feature work; the orchestrator still **squash-merges** the release PR and fan-out stays squash. The dual-method recipe in “Pipeline gotcha” (keep both methods enabled) remains correct prior art. This ADR’s body is otherwise left as the historical Changesets → release-please decision record.
+> **Amended (A-1176).** The “squash merge stays” recommendation for **feature** PRs below is **superseded** by the estate dual merge policy in [shared-agents-md ADR-0003](https://github.com/acme-skunkworks/shared-agents-md/blob/main/docs/adr/0003-dual-merge-policy.md) ([A-1176](https://linear.app/rheged-studio/issue/A-1176)): feature/ship PRs land as **merge commits**; release-please ranks Conventional Commits on `main` (A-824); Conventional PR titles stay CI-required but are no longer the sole post-merge bump signal for feature work; the orchestrator still **squash-merges** the release PR and fan-out stays squash. The dual-method recipe in “Pipeline gotcha” (keep both methods enabled) remains correct prior art. This ADR’s body is otherwise left as the historical Changesets → release-please decision record.
 
-This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope. **Decision: accepted — proceed with strand A** (2026-06-22); implementation is tracked in [A-371](https://linear.app/acme-skunkworks/issue/A-371) and **not yet actioned in code**.
+This ADR proposes replacing **Changesets** with a **Conventional Commits**–driven flow using [release-please](https://github.com/googleapis/release-please), changing _only_ how the version bump is decided and leaving the release topology, security model, and `package.json` semantics untouched. It documents the trade-offs and a deliberately narrowed scope. **Decision: accepted — proceed with strand A** (2026-06-22); implementation is tracked in [A-371](https://linear.app/rheged-studio/issue/A-371) and **not yet actioned in code**.
 
 ## Context
 
@@ -81,7 +81,7 @@ Keep the current flow. If the real pain is _forgetting_ a changeset rather than 
 
 ## Decision
 
-**Accepted — Option A (release-please, strand A only), 2026-06-22.** The deciding factor is **cross-repo consistency**: the org is standardising on release-please, which outweighs the "roughly lateral in isolation" assessment for this single package. Option C (stay on Changesets) was the defensible do-nothing; Option B (collapse the version-PR doubling / semantic-release) remains explicitly deferred. Implementation is tracked in [A-371](https://linear.app/acme-skunkworks/issue/A-371); this ADR records the decision, not its execution.
+**Accepted — Option A (release-please, strand A only), 2026-06-22.** The deciding factor is **cross-repo consistency**: the org is standardising on release-please, which outweighs the "roughly lateral in isolation" assessment for this single package. Option C (stay on Changesets) was the defensible do-nothing; Option B (collapse the version-PR doubling / semantic-release) remains explicitly deferred. Implementation is tracked in [A-371](https://linear.app/rheged-studio/issue/A-371); this ADR records the decision, not its execution.
 
 ## Consequences
 

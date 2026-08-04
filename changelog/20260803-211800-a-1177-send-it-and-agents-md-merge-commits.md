@@ -21,4 +21,4 @@ stats:
 
 ## Changed
 
-**Estate merge-commit cutover ([A-1177](https://linear.app/acme-skunkworks/issue/A-1177))** — re-vendor `send-it` **0.7.0** (feature PRs use `gh pr merge --auto --merge`) and refresh `AGENTS.md` dual-merge policy from `shared-agents-md`. Fan-outs remain paused (A-809), so this is a manual one-shot.
+**Estate merge-commit cutover ([A-1177](https://linear.app/rheged-studio/issue/A-1177))** — re-vendor `send-it` **0.7.0** (feature PRs use `gh pr merge --auto --merge`) and refresh `AGENTS.md` dual-merge policy from `shared-agents-md`. Fan-outs remain paused (A-809), so this is a manual one-shot.
