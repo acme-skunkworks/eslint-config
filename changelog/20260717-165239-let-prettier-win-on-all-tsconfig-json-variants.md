@@ -28,7 +28,7 @@ version: 1.1.2
   formatting rules (`array-bracket-newline`, `array-element-newline`,
   `object-curly-spacing`, `object-property-newline`) are off for every named
   variant — including `tsconfig.tools.json`. Short `exclude` / `include` arrays
-  no longer ping-pong between `eslint --fix` and Prettier ([A-709](https://linear.app/acme-skunkworks/issue/A-709)).
+  no longer ping-pong between `eslint --fix` and Prettier ([A-709](https://linear.app/rheged-studio/issue/A-709)).
 
 ## Added
 

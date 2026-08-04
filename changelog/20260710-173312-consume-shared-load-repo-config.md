@@ -24,5 +24,5 @@ version: 1.1.2
 
 - `ci.yml` / `pkg-release.yml` `config` jobs call
   `reusable-load-repo-config.yml@v1` instead of the local composite
-  ([A-779](https://linear.app/acme-skunkworks/issue/A-779)).
+  ([A-779](https://linear.app/rheged-studio/issue/A-779)).
 - Deleted `.github/actions/load-repo-config/`.
