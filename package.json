@@ -52,8 +52,8 @@
     "format": "npx prettier --write .",
     "lint": "eslint 'index.ts' 'rules/**/*.ts' --cache --cache-location ./.eslintcache",
     "lint:fix": "eslint 'index.ts' 'rules/**/*.ts' --fix --cache --cache-location ./.eslintcache",
-    "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
-    "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**'",
+    "lint:md": "markdownlint-cli2 '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**' '!**/.claude/skills/**' '!**/.agents/skills/**'",
+    "lint:md:fix": "markdownlint-cli2 --fix '**/*.{md,mdx}' '!**/node_modules/**' '!**/dist/**' '!**/.turbo/**' '!**/.astro/**' '!**/.claude/skills/**' '!**/.agents/skills/**'",
     "lint:sh": "bash -c 'if command -v shellcheck >/dev/null 2>&1; then shellcheck infrastructure/scripts/*.sh .husky/pre-commit .husky/pre-push .husky/commit-msg; elif [ \"$(uname -s)\" = \"Darwin\" ]; then echo \"⚠️  shellcheck not installed — skipping. Install: brew install shellcheck\"; else echo \"⚠️  shellcheck not installed — skipping. Install: apt-get install shellcheck\"; fi'",
     "lint:workflows": "actionlint",
     "lint:yaml": "yamllint .",
@@ -109,9 +109,9 @@
     "typescript-eslint": "^8.46.0"
   },
   "devDependencies": {
-    "@acme-skunkworks/changelog-core": "^1.1.0",
-    "@acme-skunkworks/commitlint-config": "^1.0.0",
-    "@acme-skunkworks/markdownlint-config": "^2.0.0",
+    "@acme-skunkworks/changelog-core": "^1.1.1",
+    "@acme-skunkworks/commitlint-config": "^1.0.1",
+    "@acme-skunkworks/markdownlint-config": "^3.0.0",
     "@commitlint/cli": "^21.2.1",
     "@types/eslint": "^9.6.1",
     "@types/node": "^25.6.0",

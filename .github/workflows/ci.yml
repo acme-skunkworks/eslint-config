@@ -46,6 +46,8 @@ jobs:
       markdown-globs: |
         **/*.{md,mdx}
         !**/node_modules/**
+        !**/.claude/skills/**
+        !**/.agents/skills/**
       changelog-script: validate:changelog
 
   build-test:
