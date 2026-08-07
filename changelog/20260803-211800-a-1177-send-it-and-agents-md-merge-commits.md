@@ -16,9 +16,10 @@ stats:
   files_changed: 13
   loc_added: 271
   loc_removed: 162
-  commits:
+  commits: 2
+version: 1.1.3
 ---
 
 ## Changed
 
-**Estate merge-commit cutover ([A-1177](https://linear.app/rheged-studio/issue/A-1177))** — re-vendor `send-it` **0.7.0** (feature PRs use `gh pr merge --auto --merge`) and refresh `AGENTS.md` dual-merge policy from `shared-agents-md`. Fan-outs remain paused (A-809), so this is a manual one-shot.
+**Estate merge-commit cutover ([A-1177](https://linear.app/rheged-studio/issue/A-1177))** — re-vendor `send-it` **0.7.0** (feature PRs use `gh pr merge --auto --merge`) and refresh `AGENTS.md` dual-merge policy from `shared-agents-md`. Fan-outs remain paused ([A-809](https://linear.app/rheged-studio/issue/A-809)), so this is a manual one-shot.

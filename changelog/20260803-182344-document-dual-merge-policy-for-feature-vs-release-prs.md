@@ -1,7 +1,7 @@
 ---
 title: Document dual merge policy for feature vs release PRs
 release_note:
-version:
+version: 1.1.3
 created_at: '2026-08-03T18:23:44Z'
 merged_at: '2026-08-03T20:03:02Z'
 branch: a-1176-update-send-it-derive-bump-claudemd-adr-for-merge-commits
@@ -17,6 +17,7 @@ stats:
   files_changed: 4
   loc_added: 38
   loc_removed: 8
+  commits: 2
 ---
 
 ## Changed

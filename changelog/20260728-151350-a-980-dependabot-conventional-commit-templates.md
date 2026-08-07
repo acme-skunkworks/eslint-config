@@ -1,7 +1,7 @@
 ---
 title: Add npm ecosystem to Dependabot with Conventional commit prefixes
 release_note:
-version:
+version: 1.1.3
 created_at: '2026-07-28T15:13:50Z'
 merged_at: '2026-07-28T16:05:55Z'
 branch: a-980-dependabot-conventional-commit-templates
@@ -17,7 +17,7 @@ stats:
   files_changed: 2
   loc_added: 60
   loc_removed: 0
-  commits:
+  commits: 3
 ---
 
 ## Added
