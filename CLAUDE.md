@@ -148,11 +148,11 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 Today's scripts:
 
-| File                           | Replaces                   | Tests                                                                                                                 |
-| ------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `scripts/ensure-yamllint.sh`   | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                   |
-| `scripts/ensure-actionlint.sh` | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                      |
-| `scripts/ensure-bats.sh`       | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, GITHUB_PATH propagation) |
+| File                           | Replaces                   | Tests                                                                                                                   |
+| ------------------------------ | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `scripts/ensure-yamllint.sh`   | `ci.yml` yamllint step     | `tests/ensure-yamllint.bats` (install / already-installed branches)                                                     |
+| `scripts/ensure-actionlint.sh` | `ci.yml` actionlint step   | `tests/ensure-actionlint.bats` (cache-hit / cache-miss branches)                                                        |
+| `scripts/ensure-bats.sh`       | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, `GITHUB_PATH` propagation) |
 
 Changelog validate / completeness / enrich / finalise are provided by
 `@acme-skunkworks/changelog-core` (`pnpm validate:changelog`,

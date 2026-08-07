@@ -4,7 +4,7 @@ Workflow logic extracted from `.github/workflows/*.yml` plus shared dev-tooling 
 
 ## Layout
 
-```
+```text
 infrastructure/
   scripts/                          # executable logic. one file = one purpose
     ensure-yamllint.sh              # pre-commit yamllint (hash-pinned pip install)
